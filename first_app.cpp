@@ -20,9 +20,9 @@ namespace ve {
     }
     void FirstApp::loadModels() {
         std::vector<VeModel::Vertex> vertices{
-            {{0.0f, -0.5f}},
-            {{0.5f, 0.5f}},
-            {{-0.5f, 0.5f}}
+            {{0.0f, -0.5f}, {1.0f,0.0f,0.0f}},
+            {{0.5f, 0.5f},{0.0f,1.0f,0.0f}},
+            {{-0.5f, 0.5f},{0.0f,0.0f,1.0f}}
         };
         veModel = std::make_unique<VeModel>(veDevice, vertices);
     }
