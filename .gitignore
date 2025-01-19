@@ -1,0 +1,8 @@
+# Ignore compiled output files
+*.out
+
+# Ignore Vulkan SPIR-V shader files
+*.spv
+
+# Ignore Visual Studio Code settings folder
+.vscode/
