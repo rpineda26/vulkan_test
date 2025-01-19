@@ -1,10 +1,10 @@
 #include "ve_device.hpp"
-
 // std headers
 #include <cstring>
 #include <iostream>
 #include <set>
 #include <unordered_set>
+
 
 namespace ve {
 
@@ -278,8 +278,8 @@ std::vector<const char *> VeDevice::getRequiredExtensions() {
 }
 
 void VeDevice::hasGflwRequiredInstanceExtensions() {
-  uint32_t extensionCount = 0;
-  vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+    uint32_t extensionCount = 0;
+    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
     std::vector<VkExtensionProperties> extensions(extensionCount);
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 

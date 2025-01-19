@@ -104,10 +104,7 @@ namespace ve{
     }
     PipelineConfigInfo VePipeline::defaultPipelineConfigInfo(uint32_t width, uint32_t height){
         PipelineConfigInfo configInfo{};
-        return configInfo;
-    }
-    static  PipelineConfigInfo defaultPipelineConfigInfo(uint32_t width, uint32_t height){
-        PipelineConfigInfo configInfo{};
+
         //input assembly
         configInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         configInfo.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
