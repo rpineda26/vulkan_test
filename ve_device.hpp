@@ -5,8 +5,7 @@
 // std lib headers
 #include <string>
 #include <vector>
-#include <vulkan/vulkan.h>
-#include <vulkan/vulkan_beta.h>
+
 namespace ve {
 
 struct SwapChainSupportDetails {
@@ -36,7 +35,7 @@ class VeDevice {
 
   // Not copyable or movable
   VeDevice(const VeDevice &) = delete;
-  VeDevice& operator=(const VeDevice &) = delete;
+  void operator=(const VeDevice &) = delete;
   VeDevice(VeDevice &&) = delete;
   VeDevice &operator=(VeDevice &&) = delete;
 

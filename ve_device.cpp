@@ -1,10 +1,10 @@
 #include "ve_device.hpp"
+
 // std headers
 #include <cstring>
 #include <iostream>
 #include <set>
 #include <unordered_set>
-
 
 namespace ve {
 
@@ -84,7 +84,6 @@ void VeDevice::createInstance() {
   VkInstanceCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   createInfo.pApplicationInfo = &appInfo;
-  createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 
   auto extensions = getRequiredExtensions();
   createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
@@ -278,43 +277,27 @@ std::vector<const char *> VeDevice::getRequiredExtensions() {
 }
 
 void VeDevice::hasGflwRequiredInstanceExtensions() {
-    uint32_t extensionCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-    std::vector<VkExtensionProperties> extensions(extensionCount);
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+  uint32_t extensionCount = 0;
+  vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+  std::vector<VkExtensionProperties> extensions(extensionCount);
+  vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-    std::cout << "Available extensions:" << std::endl;
-    std::unordered_set<std::string> available;
-    for (const auto &extension : extensions) {
-        std::cout << "\t" << extension.extensionName << std::endl;
-        available.insert(extension.extensionName);
+  std::cout << "available extensions:" << std::endl;
+  std::unordered_set<std::string> available;
+  for (const auto &extension : extensions) {
+    std::cout << "\t" << extension.extensionName << std::endl;
+    available.insert(extension.extensionName);
+  }
+
+  std::cout << "required extensions:" << std::endl;
+  auto requiredExtensions = getRequiredExtensions();
+  for (const auto &required : requiredExtensions) {
+    std::cout << "\t" << required << std::endl;
+    if (available.find(required) == available.end()) {
+      throw std::runtime_error("Missing required glfw extension");
     }
-
-    std::cout << "Required extensions:" << std::endl;
-    auto requiredExtensions = getRequiredExtensions();
-    for (const auto &required : requiredExtensions) {
-        std::cout << "\t" << required << std::endl;
-        if (available.find(required) == available.end()) {
-            throw std::runtime_error("Missing required GLFW extension: " + std::string(required));
-        }
-    }
-
-    // Check for optional extensions
-    std::cout << "Optional extensions:" << std::endl;
-    std::vector<const char *> optionalExtensions = {
-        "VK_KHR_ray_tracing_pipeline", // Example of an optional extension
-        "VK_KHR_acceleration_structure",
-    };
-
-    for (const auto &optional : optionalExtensions) {
-        if (available.find(optional) != available.end()) {
-            std::cout << "\t" << optional << " is supported." << std::endl;
-        } else {
-            std::cout << "\t" << optional << " is not supported." << std::endl;
-        }
-    }
+  }
 }
-
 
 bool VeDevice::checkDeviceExtensionSupport(VkPhysicalDevice device) {
   uint32_t extensionCount;
