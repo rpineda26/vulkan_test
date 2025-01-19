@@ -30,6 +30,7 @@ namespace ve{
 
     void VePipeline::createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo){ 
         assert(configInfo.pipelineLayout != nullptr && "Cannot create graphics pipeline: no pipelineLayout provided in configInfo");
+        assert(configInfo.renderPass != nullptr && "Cannot create graphics pipeline: no renderPass provided in configInfo");
         auto vertCode = readFile(vertFilepath);
         auto fragCode = readFile(fragFilepath);
 
