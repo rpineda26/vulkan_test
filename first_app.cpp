@@ -2,6 +2,7 @@
 #include <stdexcept>
 namespace ve {
     FirstApp::FirstApp() {
+        loadModels();
         createPipelineLayout();
         createPipeline();
         createCommandBuffers();
@@ -16,6 +17,14 @@ namespace ve {
             drawFrame();
         }
         vkDeviceWaitIdle(veDevice.device()); //cpu wait for gpu to finish
+    }
+    void FirstApp::loadModels() {
+        std::vector<VeModel::Vertex> vertices{
+            {{0.0f, -0.5f}},
+            {{0.5f, 0.5f}},
+            {{-0.5f, 0.5f}}
+        };
+        veModel = std::make_unique<VeModel>(veDevice, vertices);
     }
     void FirstApp::createPipelineLayout() {
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -68,7 +77,8 @@ namespace ve {
 
             vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
             vePipeline->bind(commandBuffers[i]);
-            vkCmdDraw(commandBuffers[i], 3, 1, 0, 0); // 3 vertices, 1 instance, (0,0) offset
+            veModel->bind(commandBuffers[i]);
+            veModel->draw(commandBuffers[i]);
             vkCmdEndRenderPass(commandBuffers[i]);
             if(vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS){
                 throw std::runtime_error("failed to record command buffer!");
