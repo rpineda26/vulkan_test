@@ -6,3 +6,5 @@
 
 # Ignore Visual Studio Code settings folder
 .vscode/
+
+.env
