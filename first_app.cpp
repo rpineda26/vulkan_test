@@ -4,7 +4,7 @@ namespace ve {
     FirstApp::FirstApp() {
         loadModels();
         createPipelineLayout();
-        createPipeline();
+        recreateSwapChain();
         createCommandBuffers();
     }
     FirstApp::~FirstApp() {
@@ -38,8 +38,8 @@ namespace ve {
         }
     }
     void FirstApp::createPipeline() {
-        auto pipelineConfig = VePipeline::defaultPipelineConfigInfo(veSwapChain.width(), veSwapChain.height());
-        pipelineConfig.renderPass = veSwapChain.getRenderPass();
+        auto pipelineConfig = VePipeline::defaultPipelineConfigInfo(veSwapChain->width(), veSwapChain->height());
+        pipelineConfig.renderPass = veSwapChain->getRenderPass();
         pipelineConfig.pipelineLayout = pipelineLayout;
         vePipeline = std::make_unique<VePipeline>(
             veDevice,
@@ -47,8 +47,20 @@ namespace ve {
             "shaders/simple_shader.frag.spv",
             pipelineConfig);
     }
+    void FirstApp::recreateSwapChain() {
+        auto extent = veWindow.getExtent();
+        //while atleast one of the dimensions is 0 or the
+        //window is minimized, wait for events
+        while (extent.width == 0 || extent.height == 0) {
+            extent = veWindow.getExtent();
+            glfwWaitEvents();
+        }
+        vkDeviceWaitIdle(veDevice.device());
+        veSwapChain = std::make_unique<VeSwapChain>(veDevice, extent);
+        createPipeline();
+    }
     void FirstApp::createCommandBuffers() {
-        commandBuffers.resize(veSwapChain.imageCount());
+        commandBuffers.resize(veSwapChain->imageCount());
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -57,41 +69,58 @@ namespace ve {
         if (vkAllocateCommandBuffers(veDevice.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate command buffers!");
         }
-        for(int i=0;i<commandBuffers.size();i++){
-            VkCommandBufferBeginInfo beginInfo{};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            if(vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS){
-                throw std::runtime_error("failed to begin recording command buffer!");
-            }
-            VkRenderPassBeginInfo renderPassInfo{};
-            renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderPassInfo.renderPass = veSwapChain.getRenderPass();
-            renderPassInfo.framebuffer = veSwapChain.getFrameBuffer(i);
-            renderPassInfo.renderArea.offset = {0, 0};
-            renderPassInfo.renderArea.extent = veSwapChain.getSwapChainExtent();
-            std::array<VkClearValue, 2> clearValues{};
-            clearValues[0].color = {0.1f, 0.1f, 0.1f, 1.0f};
-            clearValues[1].depthStencil = {1.0f, 0};
-            renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-            renderPassInfo.pClearValues = clearValues.data();
+    }
+    void FirstApp::recordCommandBuffer(int imageIndex){
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        if(vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS){
+            throw std::runtime_error("failed to begin recording command buffer!");
+        }
+        VkRenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass = veSwapChain->getRenderPass();
+        renderPassInfo.framebuffer = veSwapChain->getFrameBuffer(imageIndex);
+        renderPassInfo.renderArea.offset = {0, 0};
+        renderPassInfo.renderArea.extent = veSwapChain->getSwapChainExtent();
+        std::array<VkClearValue, 2> clearValues{};
+        clearValues[0].color = {0.1f, 0.1f, 0.1f, 1.0f};
+        clearValues[1].depthStencil = {1.0f, 0};
+        renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+        renderPassInfo.pClearValues = clearValues.data();
 
-            vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-            vePipeline->bind(commandBuffers[i]);
-            veModel->bind(commandBuffers[i]);
-            veModel->draw(commandBuffers[i]);
-            vkCmdEndRenderPass(commandBuffers[i]);
-            if(vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS){
-                throw std::runtime_error("failed to record command buffer!");
-            }
+        vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vePipeline->bind(commandBuffers[imageIndex]);
+        veModel->bind(commandBuffers[imageIndex]);
+        veModel->draw(commandBuffers[imageIndex]);
+        vkCmdEndRenderPass(commandBuffers[imageIndex]);
+        if(vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS){
+            throw std::runtime_error("failed to record command buffer!");
         }
     }
     void FirstApp::drawFrame(){
         uint32_t imageIndex;
-        auto  result = veSwapChain.acquireNextImage(&imageIndex);
+        auto  result = veSwapChain->acquireNextImage(&imageIndex);
+        //If the surface has changed and is no longer compatible with the swap chain
+        //we need to recreate the swap chain
+        if(result == VK_ERROR_OUT_OF_DATE_KHR){
+            recreateSwapChain();
+            return;
+        }
+        else if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR){
+            throw std::runtime_error("failed to acquire swap chain image!");
+        }
         if(result != VK_SUCCESS){
             throw std::runtime_error("failed to acquire swap chain image!");
         }
-        result = veSwapChain.submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex);
+        //record command buffer
+        recordCommandBuffer(imageIndex);
+        //submit command buffer
+        result = veSwapChain->submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex);
+        if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || veWindow.wasWindowResized()){
+            veWindow.resetWindowResizedFlag();
+            recreateSwapChain();
+            return;
+        }
         if(result != VK_SUCCESS){
             throw std::runtime_error("failed to submit command buffer!");
         }
