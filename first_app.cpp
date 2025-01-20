@@ -15,7 +15,9 @@ namespace ve {
     void FirstApp::run() {
         SimpleRenderSystem simpleRenderSystem{veDevice, veRenderer.getSwapChainRenderPass()};
         VeCamera camera{};
-       
+        // camera.setViewYXZ({0.0f, 0.0f, 2.0f}, {0.0f, 0.0f, 0.0f});
+        camera.setViewDirection(glm::vec3(0.0f), glm::vec3{0.5f, 0.0f,1.0f});
+        
         while (!veWindow.shouldClose()) {
             glfwPollEvents();
             float aspect = veRenderer.getAspectRatio();
