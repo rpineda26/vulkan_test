@@ -9,8 +9,7 @@
 #include <cassert>
 namespace ve {
     struct SimplePushConstantData {
-        glm::mat2 transform{1.0f};
-        glm::vec2 offest;
+        glm::mat4 transform{1.0f};
         alignas(16) glm::vec3 color;
     };
 
@@ -56,11 +55,11 @@ namespace ve {
     void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<VeGameObject>& gameObjects){
         vePipeline->bind(commandBuffer);
         for(auto& obj : gameObjects){
-            obj.transform2d.rotation = glm::mod(obj.transform2d.rotation + 0.001f, glm::two_pi<float>());
+            obj.transform.rotation.y = glm::mod(obj.transform.rotation.y + 0.01f, glm::two_pi<float>());
+            obj.transform.rotation.x = glm::mod(obj.transform.rotation.x + 0.001f, glm::two_pi<float>());
             SimplePushConstantData push{};
-            push.offest = obj.transform2d.translation;
             push.color = obj.color;
-            push.transform = obj.transform2d.mat2();
+            push.transform = obj.transform.mat4();
             vkCmdPushConstants(
                 commandBuffer,
                 pipelineLayout,

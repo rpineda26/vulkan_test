@@ -24,19 +24,69 @@ namespace ve {
         }
         vkDeviceWaitIdle(veDevice.device()); //cpu wait for gpu to finish
     }
-    void FirstApp::loadGameObjects() {
+    std::unique_ptr<VeModel> createCubeModel(VeDevice& device, glm::vec3 offset) {
         std::vector<VeModel::Vertex> vertices{
-            {{0.0f, -0.5f}, {1.0f,0.0f,0.0f}},
-            {{0.5f, 0.5f},{0.0f,1.0f,0.0f}},
-            {{-0.5f, 0.5f},{0.0f,0.0f,1.0f}}
+        
+            // left face (white)
+            {{-.5f, -.5f, -.5f}, {.9f, .9f, .9f}},
+            {{-.5f, .5f, .5f}, {.9f, .9f, .9f}},
+            {{-.5f, -.5f, .5f}, {.9f, .9f, .9f}},
+            {{-.5f, -.5f, -.5f}, {.9f, .9f, .9f}},
+            {{-.5f, .5f, -.5f}, {.9f, .9f, .9f}},
+            {{-.5f, .5f, .5f}, {.9f, .9f, .9f}},
+        
+            // right face (yellow)
+            {{.5f, -.5f, -.5f}, {.8f, .8f, .1f}},
+            {{.5f, .5f, .5f}, {.8f, .8f, .1f}},
+            {{.5f, -.5f, .5f}, {.8f, .8f, .1f}},
+            {{.5f, -.5f, -.5f}, {.8f, .8f, .1f}},
+            {{.5f, .5f, -.5f}, {.8f, .8f, .1f}},
+            {{.5f, .5f, .5f}, {.8f, .8f, .1f}},
+        
+            // top face (orange, remember y axis points down)
+            {{-.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
+            {{.5f, -.5f, .5f}, {.9f, .6f, .1f}},
+            {{-.5f, -.5f, .5f}, {.9f, .6f, .1f}},
+            {{-.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
+            {{.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
+            {{.5f, -.5f, .5f}, {.9f, .6f, .1f}},
+        
+            // bottom face (red)
+            {{-.5f, .5f, -.5f}, {.8f, .1f, .1f}},
+            {{.5f, .5f, .5f}, {.8f, .1f, .1f}},
+            {{-.5f, .5f, .5f}, {.8f, .1f, .1f}},
+            {{-.5f, .5f, -.5f}, {.8f, .1f, .1f}},
+            {{.5f, .5f, -.5f}, {.8f, .1f, .1f}},
+            {{.5f, .5f, .5f}, {.8f, .1f, .1f}},
+        
+            // nose face (blue)
+            {{-.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
+            {{.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
+            {{-.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
+            {{-.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
+            {{.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
+            {{.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
+        
+            // tail face (green)
+            {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
+            {{.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
+            {{-.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
+            {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
+            {{.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
+            {{.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
+        
         };
-        auto veModel = std::make_shared<VeModel>(veDevice, vertices);
-        auto triangle = VeGameObject::createGameObject();
-        triangle.model = veModel;
-        triangle.color = {0.1f, 0.8f, 0.1f};
-        triangle.transform2d.translation.x = 0.2f;
-        triangle.transform2d.scale = {2.0f,0.5f};
-        triangle.transform2d.rotation = 0.25 * glm::two_pi<float>();
-        gameObjects.push_back(std::move(triangle));
+        for (auto& v : vertices) {
+            v.position += offset;
+        }
+        return std::make_unique<VeModel>(device, vertices);
+    }
+    void FirstApp::loadGameObjects() {
+        std::shared_ptr<VeModel> lveModel = createCubeModel(veDevice, {0.0f, 0.0f, 0.0f});
+        auto cube = VeGameObject::createGameObject();
+        cube.model = lveModel;
+        cube.transform.translation = {0.0f, 0.0f, 0.5f};
+        cube.transform.scale = {0.5f, 0.5f, 0.5f};
+        gameObjects.push_back(std::move(cube));
     }
 }

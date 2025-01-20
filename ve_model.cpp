@@ -39,7 +39,7 @@ namespace ve{
         //vert
         attributeDescriptions[0].binding = 0;
         attributeDescriptions[0].location = 0;
-        attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT; //RG
+        attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT; //RG
         attributeDescriptions[0].offset = offsetof(Vertex, position);
         //frag
         attributeDescriptions[1].binding = 0;
