@@ -1,8 +1,24 @@
 #include "ve_model.hpp"
-#include <cassert>
+#include "utility.hpp"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
+
 #include <iostream>
+#include <cassert>
+#include <cstring>
+#include <unordered_map>
+
+namespace std{
+    template<> struct hash<ve::VeModel::Vertex>{
+        size_t operator()(const ve::VeModel::Vertex& vertex) const{
+            size_t seed = 0;
+            ve::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
+            return seed;
+        }
+    };
+}
 namespace ve{
     VeModel::VeModel(VeDevice& device, const VeModel::Builder &builder): veDevice(device){
         createVertexBuffers(builder.vertices);
@@ -113,6 +129,7 @@ namespace ve{
         }
         vertices.clear();
         indices.clear();
+        std::unordered_map<Vertex, uint32_t> uniqueVertices{};
         for(const auto& shape: shapes){
             for(const auto& index: shape.mesh.indices){
                 Vertex vertex{};
@@ -147,7 +164,12 @@ namespace ve{
                         attrib.texcoords[2 * index.texcoord_index + 1],
                     };     
                 }
-                vertices.push_back(vertex);
+                //if vertex is unique, add to list
+                if(uniqueVertices.count(vertex) == 0){
+                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                    vertices.push_back(vertex);
+                }
+                indices.push_back(uniqueVertices[vertex]);
             }
         }
     }
