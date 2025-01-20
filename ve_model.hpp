@@ -16,7 +16,12 @@ namespace ve{
             static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
             static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
         };
-        VeModel(VeDevice& device, const std::vector<Vertex>& vertices);
+        struct Builder{
+            std::vector<Vertex> vertices;
+            std::vector<uint32_t> indices;
+        };
+
+        VeModel(VeDevice& device, const VeModel::Builder& builder);
         ~VeModel();
         VeModel(const VeModel&) = delete;
         VeModel& operator=(const VeModel&) = delete;
@@ -26,10 +31,17 @@ namespace ve{
 
     private:
         void createVertexBuffers(const std::vector<Vertex>& vertices);
-
+        void createIndexBuffers(const std::vector<uint32_t>& indices);  
+        //attributes
         VeDevice& veDevice;
+        //vertex buffer
         VkBuffer vertexBuffer;
         VkDeviceMemory vertexBufferMemory;
         uint32_t vertexCount;
+        //index buffer
+        bool hasIndexBuffer{false};
+        VkBuffer indexBuffer;
+        VkDeviceMemory indexBufferMemory;
+        uint32_t indexCount;
     };
 }
