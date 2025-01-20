@@ -3,18 +3,19 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
-
+#include <glm/gtc/constants.hpp>
 #include <array>
 #include <stdexcept>
 #include <cassert>
 namespace ve {
     struct SimplePushConstantData {
+        glm::mat2 transform{1.0f};
         glm::vec2 offest;
         alignas(16) glm::vec3 color;
     };
 
     FirstApp::FirstApp() {
-        loadModels();
+        loadGameObjects();
         createPipelineLayout();
         recreateSwapChain();
         createCommandBuffers();
@@ -30,13 +31,20 @@ namespace ve {
         }
         vkDeviceWaitIdle(veDevice.device()); //cpu wait for gpu to finish
     }
-    void FirstApp::loadModels() {
+    void FirstApp::loadGameObjects() {
         std::vector<VeModel::Vertex> vertices{
             {{0.0f, -0.5f}, {1.0f,0.0f,0.0f}},
             {{0.5f, 0.5f},{0.0f,1.0f,0.0f}},
             {{-0.5f, 0.5f},{0.0f,0.0f,1.0f}}
         };
-        veModel = std::make_unique<VeModel>(veDevice, vertices);
+        auto veModel = std::make_shared<VeModel>(veDevice, vertices);
+        auto triangle = VeGameObject::createGameObject();
+        triangle.model = veModel;
+        triangle.color = {0.1f, 0.8f, 0.1f};
+        triangle.transform2d.translation.x = 0.2f;
+        triangle.transform2d.scale = {2.0f,0.5f};
+        triangle.transform2d.rotation = 0.25 * glm::two_pi<float>();
+        gameObjects.push_back(std::move(triangle));
     }
     void FirstApp::createPipelineLayout() {
         VkPushConstantRange pushConstantRange{};
@@ -100,8 +108,6 @@ namespace ve {
         }
     }
     void FirstApp::recordCommandBuffer(int imageIndex){
-        static int frame = 0;
-        frame = (frame + 1) % 1000;
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         if(vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS){
@@ -114,7 +120,7 @@ namespace ve {
         renderPassInfo.renderArea.offset = {0, 0};
         renderPassInfo.renderArea.extent = veSwapChain->getSwapChainExtent();
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {0.01f, 0.1f, 0.1f, 1.0f};
+        clearValues[0].color = {0.01f, 0.01f, 0.01f, 1.0f};
         clearValues[1].depthStencil = {1.0f, 0};
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();
@@ -131,27 +137,32 @@ namespace ve {
         VkRect2D scissor{{0, 0}, veSwapChain->getSwapChainExtent()};
         vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &viewport);
         vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &scissor);
+        
+        renderGameObjects(commandBuffers[imageIndex]);
 
-        vePipeline->bind(commandBuffers[imageIndex]);
-        veModel->bind(commandBuffers[imageIndex]);
-        for(int i = 0; i < 4; i++){
+        vkCmdEndRenderPass(commandBuffers[imageIndex]);
+        if(vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS){
+            throw std::runtime_error("failed to record command buffer!");
+        }
+    }
+    void FirstApp::renderGameObjects(VkCommandBuffer commandBuffer){
+        vePipeline->bind(commandBuffer);
+        for(auto& obj : gameObjects){
+            obj.transform2d.rotation = glm::mod(obj.transform2d.rotation + 0.001f, glm::two_pi<float>());
             SimplePushConstantData push{};
-            push.offest = {-0.5f + frame * 0.002f, -0.4f + i * 0.25f};
-            push.color = {0.0f, 0.0f, 0.2f + 0.2 * i};
+            push.offest = obj.transform2d.translation;
+            push.color = obj.color;
+            push.transform = obj.transform2d.mat2();
             vkCmdPushConstants(
-                commandBuffers[imageIndex],
+                commandBuffer,
                 pipelineLayout,
                 VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                 0,
                 sizeof(SimplePushConstantData),
                 &push
             );
-            veModel->draw(commandBuffers[imageIndex]);
-        }
-        
-        vkCmdEndRenderPass(commandBuffers[imageIndex]);
-        if(vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS){
-            throw std::runtime_error("failed to record command buffer!");
+            obj.model->bind(commandBuffer);
+            obj.model->draw(commandBuffer);
         }
     }
     void FirstApp::drawFrame(){
