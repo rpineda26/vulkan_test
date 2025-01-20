@@ -13,11 +13,14 @@ namespace ve {
             ~VeRenderer();
             VeRenderer(const VeRenderer&) = delete;
             VeRenderer& operator=(const VeRenderer&) = delete;
-             
+
+            //methods
             VkCommandBuffer beginFrame();
             void endFrame();
             void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
             void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
+
+            //getters
             VkRenderPass getSwapChainRenderPass() const { return veSwapChain->getRenderPass(); }
             bool isFrameInProgress() const { return isFrameStarted; }
             VkCommandBuffer getCurrentCommandBuffer() const { 
@@ -28,6 +31,7 @@ namespace ve {
                 assert(isFrameStarted && "Cannot get frame index when frame not in progress.");
                 return currentFrameIndex; 
             }
+            float getAspectRatio() const { return veSwapChain->extentAspectRatio(); }
         private:
             void createCommandBuffers();
             void freeCommandBuffers();

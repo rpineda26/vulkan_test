@@ -1,5 +1,6 @@
 #include "first_app.hpp"
 #include "simple_render_system.hpp"
+#include "ve_camera.hpp"
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
@@ -13,11 +14,17 @@ namespace ve {
 
     void FirstApp::run() {
         SimpleRenderSystem simpleRenderSystem{veDevice, veRenderer.getSwapChainRenderPass()};
+        VeCamera camera{};
+       
         while (!veWindow.shouldClose()) {
             glfwPollEvents();
+            float aspect = veRenderer.getAspectRatio();
+            // camera.setOrtho(-aspect, aspect, -0.9f, 0.9f, -1.0f, 1.0f);
+            camera.setPerspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
+
             if(auto commandBuffer = veRenderer.beginFrame()){
                 veRenderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(commandBuffer,gameObjects);
+                simpleRenderSystem.renderGameObjects(commandBuffer,gameObjects,camera);
                 veRenderer.endSwapChainRenderPass(commandBuffer);
                 veRenderer.endFrame();
             }
@@ -85,7 +92,7 @@ namespace ve {
         std::shared_ptr<VeModel> lveModel = createCubeModel(veDevice, {0.0f, 0.0f, 0.0f});
         auto cube = VeGameObject::createGameObject();
         cube.model = lveModel;
-        cube.transform.translation = {0.0f, 0.0f, 0.5f};
+        cube.transform.translation = {0.0f, 0.0f, 2.5f};
         cube.transform.scale = {0.5f, 0.5f, 0.5f};
         gameObjects.push_back(std::move(cube));
     }
