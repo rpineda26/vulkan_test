@@ -1,5 +1,8 @@
 #include "ve_model.hpp"
 #include <cassert>
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
+#include <iostream>
 namespace ve{
     VeModel::VeModel(VeDevice& device, const VeModel::Builder &builder): veDevice(device){
         createVertexBuffers(builder.vertices);
@@ -92,4 +95,61 @@ namespace ve{
         return attributeDescriptions;
     }
     
+    std::unique_ptr<VeModel> VeModel::createModelFromFile(VeDevice& device, const std::string& filePath){
+        Builder builder{};
+        builder.loadModel(filePath);
+        std::cout << "Vertex count: " << builder.vertices.size() << std::endl;
+        return std::make_unique<VeModel>(device, builder);
+    }
+    void VeModel::Builder::loadModel(const std::string& filePath){
+        tinyobj::attrib_t attrib;
+        std::vector<tinyobj::shape_t> shapes;
+        std::vector<tinyobj::material_t> materials;
+        std::string warn;
+        std::string err;
+
+        if(!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filePath.c_str())){
+            throw std::runtime_error(warn + err);
+        }
+        vertices.clear();
+        indices.clear();
+        for(const auto& shape: shapes){
+            for(const auto& index: shape.mesh.indices){
+                Vertex vertex{};
+                if(index.vertex_index >= 0){
+                    vertex.position = {
+                        attrib.vertices[3 * index.vertex_index + 0],
+                        attrib.vertices[3 * index.vertex_index + 1],
+                        attrib.vertices[3 * index.vertex_index + 2]
+                    };
+                    auto colorIndex = 3 * index.vertex_index + 2;
+                    if(colorIndex < attrib.colors.size()){
+                        vertex.color = {
+                            attrib.colors[colorIndex - 2],
+                            attrib.colors[colorIndex - 1],
+                            attrib.colors[colorIndex - 0]
+                        };
+                    }else{
+                        vertex.color = {1.0f, 1.0f, 1.0f}; // default color
+                    }
+    
+                }
+                if(index.normal_index >= 0){
+                    vertex.normal = {
+                        attrib.normals[3 * index.normal_index + 0],
+                        attrib.normals[3 * index.normal_index + 1],
+                        attrib.normals[3 * index.normal_index + 2]
+                    };
+                }
+                if(index.texcoord_index >= 0){
+                    vertex.uv = {
+                        attrib.texcoords[2 * index.texcoord_index + 0],
+                        attrib.texcoords[2 * index.texcoord_index + 1],
+                    };     
+                }
+                vertices.push_back(vertex);
+            }
+        }
+    }
+
 }

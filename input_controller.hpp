@@ -25,7 +25,7 @@ namespace ve{
         };
             void moveInPlane(GLFWwindow* window, float deltaTime, VeGameObject& gameObject);
             KeyMappings keyMappings{};
-            float moveSpeed{3.0f};
-            float lookSpeed{1.5f};
+            float moveSpeed{1.0f};
+            float lookSpeed{0.5f};
     };
 }
