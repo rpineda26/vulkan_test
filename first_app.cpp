@@ -1,13 +1,17 @@
 #include "first_app.hpp"
 #include "simple_render_system.hpp"
 #include "ve_camera.hpp"
+#include "input_controller.hpp"
+
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
+
 #include <array>
 #include <stdexcept>
 #include <cassert>
+#include <chrono>
 namespace ve {
     FirstApp::FirstApp() { loadGameObjects(); }
     FirstApp::~FirstApp() {}
@@ -15,11 +19,20 @@ namespace ve {
     void FirstApp::run() {
         SimpleRenderSystem simpleRenderSystem{veDevice, veRenderer.getSwapChainRenderPass()};
         VeCamera camera{};
-        // camera.setViewYXZ({0.0f, 0.0f, 2.0f}, {0.0f, 0.0f, 0.0f});
-        camera.setViewDirection(glm::vec3(0.0f), glm::vec3{0.5f, 0.0f,1.0f});
-        
+        auto viewerObject = VeGameObject::createGameObject();
+        InputController inputController{};
+        auto currentTime = std::chrono::high_resolution_clock::now();
+
         while (!veWindow.shouldClose()) {
             glfwPollEvents();
+
+            auto newTime = std::chrono::high_resolution_clock::now();
+            float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
+            currentTime = newTime;
+            frameTime = glm::min(frameTime, 0.1f); //clamp large frametimes
+            inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, viewerObject);
+            camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
+            //setup viewing projection
             float aspect = veRenderer.getAspectRatio();
             // camera.setOrtho(-aspect, aspect, -0.9f, 0.9f, -1.0f, 1.0f);
             camera.setPerspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
