@@ -4,6 +4,7 @@
 #include "ve_device.hpp"
 #include "ve_game_object.hpp"
 #include "ve_camera.hpp"
+#include "frame_info.hpp"
 
 #include <memory>
 #include <vector>
@@ -14,7 +15,10 @@ namespace ve {
             ~SimpleRenderSystem();
             SimpleRenderSystem(const SimpleRenderSystem&) = delete;
             SimpleRenderSystem& operator=(const SimpleRenderSystem&) = delete;
-            void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<VeGameObject>& gameObjects, const VeCamera& camera);
+            void renderGameObjects(
+                FrameInfo& frameInfo, 
+                std::vector<VeGameObject>& gameObjects
+            );
 
         private:
             void createPipelineLayout();

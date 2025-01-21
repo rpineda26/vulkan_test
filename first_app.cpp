@@ -2,6 +2,7 @@
 #include "simple_render_system.hpp"
 #include "ve_camera.hpp"
 #include "input_controller.hpp"
+#include "buffer.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -13,10 +14,26 @@
 #include <cassert>
 #include <chrono>
 namespace ve {
+    struct GlobalUbo {
+        glm::mat4 projectionView{1.0f};
+        glm::vec3 lightDirection = glm::normalize(glm::vec3{1.0f, -3.0f, -1.0f});
+    };
     FirstApp::FirstApp() { loadGameObjects(); }
     FirstApp::~FirstApp() {}
 
     void FirstApp::run() {
+        std::vector<std::unique_ptr<VeBuffer>> uniformBuffers(VeSwapChain::MAX_FRAMES_IN_FLIGHT);
+        for(int i =0; i< uniformBuffers.size(); i++){
+            uniformBuffers[i] = std::make_unique<VeBuffer>(
+                veDevice,
+                sizeof(GlobalUbo),
+                1,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+                veDevice.properties.limits.minUniformBufferOffsetAlignment
+            );
+            uniformBuffers[i]->map();
+        }
         SimpleRenderSystem simpleRenderSystem{veDevice, veRenderer.getSwapChainRenderPass()};
         VeCamera camera{};
         auto viewerObject = VeGameObject::createGameObject();
@@ -38,8 +55,16 @@ namespace ve {
             camera.setPerspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
 
             if(auto commandBuffer = veRenderer.beginFrame()){
+                int frameIndex = veRenderer.getFrameIndex();
+                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera};
+                //update global UBO
+                GlobalUbo globalUbo{};
+                globalUbo.projectionView = camera.getProjectionMatrix() * camera.getViewMatrix();
+                uniformBuffers[frameIndex]->writeToBuffer(&globalUbo);
+                uniformBuffers[frameIndex]->flush();
+                //render
                 veRenderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(commandBuffer,gameObjects,camera);
+                simpleRenderSystem.renderGameObjects(frameInfo,gameObjects);
                 veRenderer.endSwapChainRenderPass(commandBuffer);
                 veRenderer.endFrame();
             }
