@@ -15,8 +15,11 @@
 #include <chrono>
 namespace ve {
     struct GlobalUbo {
-        alignas(16)glm::mat4 projectionView{1.0f};
-        alignas(16)glm::vec3 lightDirection = glm::normalize(glm::vec3{1.0f, -3.0f, -1.0f});
+        glm::mat4 projectionView{1.0f};
+        glm::vec4 ambientLightColor{1.0f,1.0f,1.0f,0.02f};
+        glm::vec3 lightPosition{-1.0f};
+        alignas(16)glm::vec4 lightColor{1.0f};
+
     };
     FirstApp::FirstApp() { 
         globalPool = VeDescriptorPool::Builder(veDevice)
@@ -54,6 +57,7 @@ namespace ve {
         SimpleRenderSystem simpleRenderSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
         VeCamera camera{};
         auto viewerObject = VeGameObject::createGameObject();
+        viewerObject.transform.translation.z  =-2.5f;
         InputController inputController{};
         auto currentTime = std::chrono::high_resolution_clock::now();
 
@@ -69,7 +73,7 @@ namespace ve {
             //setup viewing projection
             float aspect = veRenderer.getAspectRatio();
             // camera.setOrtho(-aspect, aspect, -0.9f, 0.9f, -1.0f, 1.0f);
-            camera.setPerspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
+            camera.setPerspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
             if(auto commandBuffer = veRenderer.beginFrame()){
                 int frameIndex = veRenderer.getFrameIndex();
@@ -90,11 +94,19 @@ namespace ve {
     }
     
     void FirstApp::loadGameObjects() {
-        std::shared_ptr<VeModel> lveModel = VeModel::createModelFromFile(veDevice, "models/smooth_vase.obj");
+        //object 1: vase
+        std::shared_ptr<VeModel> veModel = VeModel::createModelFromFile(veDevice, "models/smooth_vase.obj");
         auto cube = VeGameObject::createGameObject();
-        cube.model = lveModel;
-        cube.transform.translation = {0.0f, 0.0f, 2.5f};
-        cube.transform.scale = {0.5f, 0.5f, 0.5f};
+        cube.model = veModel;
+        cube.transform.translation = {0.5f, 0.5f, 0.0f};
+        cube.transform.scale = {3.0f, 1.0f, 3.0f};
         gameObjects.push_back(std::move(cube));
+        //object 2: floor
+        veModel = VeModel::createModelFromFile(veDevice, "models/quad.obj");
+        auto quad = VeGameObject::createGameObject();
+        quad.model = veModel;
+        quad.transform.translation = {0.0f, 0.5f, 0.0f};
+        quad.transform.scale = {3.0f, 0.5f, 3.0f};
+        gameObjects.push_back(std::move(quad));
     }
 }
