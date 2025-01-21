@@ -3,6 +3,7 @@
 #include "ve_model.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <memory>
+#include <unordered_map>
 namespace ve{
     struct TransformComponent{
         glm::vec3 translation{};
@@ -14,6 +15,7 @@ namespace ve{
     class VeGameObject { 
         public:
             using id_t = unsigned int;
+            using Map = std::unordered_map<id_t, VeGameObject>;
             static VeGameObject createGameObject(){ 
                 static id_t currentId = 0; 
                 return VeGameObject{currentId++}; 
@@ -22,7 +24,7 @@ namespace ve{
             VeGameObject& operator=(const VeGameObject&) = delete;
             VeGameObject(VeGameObject&&) = default;
             VeGameObject& operator=(VeGameObject&&) = default;
-            id_t getID() { return id; }
+            id_t getId() { return id; }
             std::shared_ptr<VeModel> model{};
             glm::vec3  color{};
             TransformComponent transform{};

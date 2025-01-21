@@ -44,7 +44,7 @@ namespace ve {
             uniformBuffers[i]->map();
         }
         auto globalSetLayout = VeDescriptorSetLayout::Builder(veDevice)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
             .build();
         std::vector<VkDescriptorSet> globalDescriptorSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT);
         for(int i = 0; i < globalDescriptorSets.size(); i++){
@@ -77,7 +77,7 @@ namespace ve {
 
             if(auto commandBuffer = veRenderer.beginFrame()){
                 int frameIndex = veRenderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex]};
+                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects};
                 //update global UBO
                 GlobalUbo globalUbo{};
                 globalUbo.projectionView = camera.getProjectionMatrix() * camera.getViewMatrix();
@@ -85,7 +85,7 @@ namespace ve {
                 uniformBuffers[frameIndex]->flush();
                 //render
                 veRenderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(frameInfo,gameObjects);
+                simpleRenderSystem.renderGameObjects(frameInfo);
                 veRenderer.endSwapChainRenderPass(commandBuffer);
                 veRenderer.endFrame();
             }
@@ -100,13 +100,13 @@ namespace ve {
         cube.model = veModel;
         cube.transform.translation = {0.5f, 0.5f, 0.0f};
         cube.transform.scale = {3.0f, 1.0f, 3.0f};
-        gameObjects.push_back(std::move(cube));
+        gameObjects.emplace(cube.getId(),std::move(cube));
         //object 2: floor
         veModel = VeModel::createModelFromFile(veDevice, "models/quad.obj");
         auto quad = VeGameObject::createGameObject();
         quad.model = veModel;
         quad.transform.translation = {0.0f, 0.5f, 0.0f};
         quad.transform.scale = {3.0f, 0.5f, 3.0f};
-        gameObjects.push_back(std::move(quad));
+        gameObjects.emplace(quad.getId(),std::move(quad));
     }
 }

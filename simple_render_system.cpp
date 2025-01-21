@@ -57,7 +57,7 @@ namespace ve {
     }
     
     
-    void SimpleRenderSystem::renderGameObjects(FrameInfo& frameInfo, std::vector<VeGameObject>& gameObjects) {
+    void SimpleRenderSystem::renderGameObjects(FrameInfo& frameInfo) {
         vePipeline->bind(frameInfo.commandBuffer);
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,
@@ -69,7 +69,8 @@ namespace ve {
             0,
             nullptr
         );
-        for(auto& obj : gameObjects){
+        for(auto& key_value : frameInfo.gameObjects){
+            auto& obj = key_value.second;
             SimplePushConstantData push{};
             push.modelMatrix =  obj.transform.mat4();
             push.normalMatrix = obj.transform.normalMatrix();
