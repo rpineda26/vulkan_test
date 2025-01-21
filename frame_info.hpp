@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ve_camera.hpp"
-
 #include <vulkan/vulkan.h>
 
 namespace ve{
@@ -10,5 +9,6 @@ namespace ve{
         float frameTime;
         VkCommandBuffer commandBuffer;
         VeCamera& camera;
+        VkDescriptorSet descriptorSet;
     };
 }

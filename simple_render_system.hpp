@@ -11,7 +11,7 @@
 namespace ve {
     class SimpleRenderSystem{
         public:
-            SimpleRenderSystem(VeDevice& device, VkRenderPass renderPass);
+            SimpleRenderSystem(VeDevice& device, VkRenderPass renderPass ,VkDescriptorSetLayout descriptorSetLayout);
             ~SimpleRenderSystem();
             SimpleRenderSystem(const SimpleRenderSystem&) = delete;
             SimpleRenderSystem& operator=(const SimpleRenderSystem&) = delete;
@@ -21,7 +21,7 @@ namespace ve {
             );
 
         private:
-            void createPipelineLayout();
+            void createPipelineLayout(VkDescriptorSetLayout descriptorSetLayout);
             void createPipeline(VkRenderPass renderPass);
 
             VeDevice& veDevice;
