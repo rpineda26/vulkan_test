@@ -8,6 +8,10 @@ namespace ve {
         PipelineConfigInfo() = default;
         PipelineConfigInfo(const PipelineConfigInfo&) = delete;
         PipelineConfigInfo& operator=(const PipelineConfigInfo&) = delete;
+
+        std::vector<VkVertexInputBindingDescription> vertexBindingDescriptions;
+        std::vector<VkVertexInputAttributeDescription> vertexAttributeDescriptions;
+        
         VkPipelineViewportStateCreateInfo viewportInfo;
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
         VkPipelineRasterizationStateCreateInfo rasterizationInfo;

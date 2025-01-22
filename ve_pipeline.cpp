@@ -55,8 +55,8 @@ namespace ve{
         shaderStages[1].flags = 0;
         shaderStages[1].pSpecializationInfo = nullptr;
 
-        auto bindingDescriptions = VeModel::Vertex::getBindingDescriptions();
-        auto attributeDescriptions = VeModel::Vertex::getAttributeDescriptions();
+        auto& bindingDescriptions = configInfo.vertexBindingDescriptions;
+        auto& attributeDescriptions = configInfo.vertexAttributeDescriptions;
         VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
@@ -169,6 +169,9 @@ namespace ve{
         configInfo.dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(configInfo.dynamicStateEnables.size());
         configInfo.dynamicStateInfo.pDynamicStates = configInfo.dynamicStateEnables.data();
         configInfo.dynamicStateInfo.flags = 0;
+
+        configInfo.vertexBindingDescriptions = VeModel::Vertex::getBindingDescriptions();
+        configInfo.vertexAttributeDescriptions = VeModel::Vertex::getAttributeDescriptions();
     }
 
 }
