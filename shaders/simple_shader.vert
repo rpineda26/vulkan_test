@@ -9,10 +9,10 @@ layout(location = 2) out vec3 fragNormal;
 layout(set = 0, binding = 0) uniform UniformBufferObject {
     mat4 projectionMatrix;
     mat4 viewMatrix;
+    mat4 invViewMatrix;
     vec4 ambientLightColor;
     vec3 lightPosition;
     vec4 lightColor;
-
 } ubo;
 
 layout(push_constant) uniform Push {

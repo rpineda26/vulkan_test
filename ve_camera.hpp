@@ -17,8 +17,10 @@ namespace ve{
             //getters
             const glm::mat4& getProjectionMatrix() const { return projectionMatrix; }
             const glm::mat4& getViewMatrix() const { return viewMatrix; }
+            const glm::mat4& getInverseMatrix() const { return inverseMatrix; }
         private:
             glm::mat4 projectionMatrix{1.0f};
             glm::mat4 viewMatrix{1.0f};
+            glm::mat4 inverseMatrix{1.0f};
     };
 }

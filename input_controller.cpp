@@ -4,10 +4,10 @@ namespace ve{
     void InputController::moveInPlane(GLFWwindow* window, float deltaTime, VeGameObject& gameObject){
         glm::vec3 rotate{0.0f};
         if(glfwGetKey(window, keyMappings.tiltUp) == GLFW_PRESS){
-            rotate.x -= 1.0f;
+            rotate.x += 1.0f;
         }
         if(glfwGetKey(window, keyMappings.tiltDown) == GLFW_PRESS){
-            rotate.x += 1.0f;
+            rotate.x -= 1.0f;
         }
         if(glfwGetKey(window, keyMappings.tiltLeft) == GLFW_PRESS){
             rotate.y -= 1.0f;
