@@ -21,13 +21,12 @@ namespace ve {
         glm::mat4 projection{1.0f};
         glm::mat4 view{1.0f};
         glm::mat4 inverseView{1.0f};
-        glm::vec4 ambientLightColor{1.0f,1.0f,1.0f,0.02f};
+        glm::vec4 ambientLightColor{1.0f,1.0f,1.0f,0.1f};
         glm::vec3 lightPosition{0.0f};
         //lightPosition{-1.18f,-6.145f,-1.0255f};
         alignas(16)glm::vec4 lightColor{1.0f, 1.0f, 1.0f, 1.0f}; //white
         // lightColor{1.0f, 0.9f, 0.5f, 1.0f}; yellowish
         //lightColor{213.0f,185.0f,255.0f,1.0f}; purple
-
     };
     FirstApp::FirstApp() { 
         globalPool = VeDescriptorPool::Builder(veDevice)
@@ -59,7 +58,7 @@ namespace ve {
             .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
         //create texture
-        VeTexture texture{veDevice, "textures/statue.jpg"};
+        VeTexture texture{veDevice, "textures/brick_texture.png", "albedo"};
         VkDescriptorImageInfo imageInfo{};
         imageInfo.imageLayout = texture.getLayout();
         imageInfo.imageView = texture.getImageView();
@@ -79,11 +78,11 @@ namespace ve {
         //create camera
         VeCamera camera{};
         auto viewerObject = VeGameObject::createGameObject();
-        viewerObject.transform.translation ={0.3991f,-0.86753,4.95668};
-        viewerObject.transform.rotation = {-0.212f,3.16696f,0.0f};
+        viewerObject.transform.translation ={-1.42281f,-10.1585,0.632};
+        viewerObject.transform.rotation = {-1.33747,1.56693f,0.0f};
         //camera controller
         InputController inputController{};
-        glm::vec3 lightPosition{0.0f};
+        glm::vec3 lightPosition{-0.811988f, -6.00838f, 0.1497f};
         //game time
         auto currentTime = std::chrono::high_resolution_clock::now();
         //main loop
@@ -95,13 +94,13 @@ namespace ve {
             currentTime = newTime;
             frameTime = glm::min(frameTime, 0.1f); //clamp large frametimes
             //update camera based on input
-            // inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, gameObjects.at(1));
+            inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, gameObjects.at(1));
             // inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, viewerObject);
-            inputController.movePosition(veWindow.getGLFWWindow(), frameTime, lightPosition);
+            // inputController.movePosition(veWindow.getGLFWWindow(), frameTime, lightPosition);
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
-            std::cout << "Light Position:x " << lightPosition.x << std::endl;
-            std::cout << "Light Position:y " << lightPosition.y << std::endl;
-            std::cout << "Light Position:z " << lightPosition.z << std::endl;
+            // std::cout << "Light Position:x " << lightPosition.x << std::endl;
+            // std::cout << "Light Position:y " << lightPosition.y << std::endl;
+            // std::cout << "Light Position:z " << lightPosition.z << std::endl;
             // std::cout << "Camera Position:x " << viewerObject.transform.translation.x << std::endl;
             // std::cout << "Camera Position:y " << viewerObject.transform.translation.y << std::endl;
             // std::cout << "Camera Position:z " << viewerObject.transform.translation.z << std::endl;
@@ -112,7 +111,7 @@ namespace ve {
             //setup viewing projection
             float aspect = veRenderer.getAspectRatio();
             // camera.setOrtho(-aspect, aspect, -0.9f, 0.9f, -1.0f, 1.0f);
-            camera.setPerspective(glm::radians(45.0f), aspect, 0.1f, 500.0f);
+            camera.setPerspective(glm::radians(45.0f), aspect, 0.1f, 1500.0f);
 
             //render frame
             if(auto commandBuffer = veRenderer.beginFrame()){

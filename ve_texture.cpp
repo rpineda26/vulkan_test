@@ -4,18 +4,30 @@
 #include <stb_image.h>
 
 namespace ve{
-    VeTexture::VeTexture(VeDevice& device, const std::string& filePath): veDevice{device}, filePath{filePath} {
-        createTextureImage();
+    VeTexture::VeTexture(VeDevice& device, const std::string& filePath, const std::string& mapType): veDevice{device} {
+        if(mapType=="albedo"){
+            VkFormat textureFormat = VK_FORMAT_R8G8B8A8_SRGB;
+            createTextureImage(textureFormat, filePath, textureImage, textureImageMemory, textureImageView, textureSampler);
+        }else{
+        VkFormat normalFormat = VK_FORMAT_R8G8B8A8_UNORM;
+        createTextureImage(normalFormat, filePath, normalImage, normalImageMemory, normalImageView, normalSampler);
+        }
     }
     VeTexture::~VeTexture(){
-        vkDestroyImage(veDevice.device(), textureImage, nullptr);
-        vkFreeMemory(veDevice.device(), textureImageMemory, nullptr);
         vkDestroySampler(veDevice.device(), textureSampler, nullptr);
         vkDestroyImageView(veDevice.device(), textureImageView, nullptr);
+        vkDestroyImage(veDevice.device(), textureImage, nullptr);
+        vkFreeMemory(veDevice.device(), textureImageMemory, nullptr);
+
+        vkDestroySampler(veDevice.device(), normalSampler, nullptr);
+        vkDestroyImageView(veDevice.device(), normalImageView, nullptr);
+        vkDestroyImage(veDevice.device(), normalImage, nullptr);
+        vkFreeMemory(veDevice.device(), normalImageMemory, nullptr);
     }
-    void VeTexture::createTextureImage(){
-        stbi_uc* pixels = stbi_load(filePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-        mipLevels = std::floor(std::log2(std::max(texWidth, texHeight))) + 1;
+    void VeTexture::createTextureImage(VkFormat textureFormat, const std::string& path, VkImage& image, VkDeviceMemory& imageMemory, VkImageView& imageView, VkSampler& imageSampler){
+        int texWidth, texHeight, texChannels;
+        stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        int mipLevels = std::floor(std::log2(std::max(texWidth, texHeight))) + 1;
         if(!pixels){
             throw std::runtime_error("failed to load texture image!");
         }
@@ -23,7 +35,7 @@ namespace ve{
         VeBuffer stagingBuffer{veDevice, 4, static_cast<uint32_t>(imageSize), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
         stagingBuffer.map();
         stagingBuffer.writeToBuffer(pixels);
-        textureFormat = VK_FORMAT_R8G8B8A8_SRGB;
+        
         //create image info
         VkImageCreateInfo imageInfo{};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -40,11 +52,11 @@ namespace ve{
         imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         //create image
-        veDevice.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+        veDevice.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
         //copy buffer to image
-        transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        veDevice.copyBufferToImage(stagingBuffer.getBuffer(), textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1);
-        generateMipMaps();
+        transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels, textureImage);
+        veDevice.copyBufferToImage(stagingBuffer.getBuffer(), image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1);
+        generateMipMaps(textureFormat, textureImage, texWidth, texHeight, mipLevels);
         //create image sampler
         textureLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         VkSamplerCreateInfo samplerInfo{};
@@ -60,15 +72,15 @@ namespace ve{
         samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
         samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
         samplerInfo.minLod = 0.0f;
-        samplerInfo.maxLod = 0.0f;
+        samplerInfo.maxLod = 1000;
         samplerInfo.mipLodBias = 0.0f;
-        if(vkCreateSampler(veDevice.device(), &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS){
+        if(vkCreateSampler(veDevice.device(), &samplerInfo, nullptr, &imageSampler) != VK_SUCCESS){
             throw std::runtime_error("failed to create texture sampler!");
         }
         //create Image View
         VkImageViewCreateInfo viewInfo{};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        viewInfo.image = textureImage;
+        viewInfo.image = image;
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         viewInfo.format = textureFormat;
         viewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
@@ -81,12 +93,12 @@ namespace ve{
         viewInfo.subresourceRange.baseArrayLayer = 0;
         viewInfo.subresourceRange.layerCount = 1;
 
-        if(vkCreateImageView(veDevice.device(), &viewInfo, nullptr, &textureImageView) != VK_SUCCESS){
+        if(vkCreateImageView(veDevice.device(), &viewInfo, nullptr, &imageView) != VK_SUCCESS){
             throw std::runtime_error("failed to create texture image view!");
         }
         stbi_image_free(pixels);
     }
-    void VeTexture::transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout){
+    void VeTexture::transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, int mipLevels, VkImage image){
         VkCommandBuffer commandBuffer = veDevice.beginSingleTimeCommands();
         VkImageMemoryBarrier barrier{};
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -94,7 +106,7 @@ namespace ve{
         barrier.newLayout = newLayout;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = textureImage;
+        barrier.image = image;
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         barrier.subresourceRange.baseMipLevel = 0;
         barrier.subresourceRange.levelCount = mipLevels;
@@ -125,7 +137,7 @@ namespace ve{
         );
         veDevice.endSingleTimeCommands(commandBuffer);
     }
-    void VeTexture::generateMipMaps(){
+    void VeTexture::generateMipMaps(VkFormat textureFormat, VkImage image, int texWidth, int texHeight, int mipLevels){
         VkFormatProperties formatProperties;
         vkGetPhysicalDeviceFormatProperties(veDevice.getPhysicalDevice( ), textureFormat, &formatProperties);
         if(!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)){
@@ -136,7 +148,7 @@ namespace ve{
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = textureImage;
+        barrier.image = image;
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         barrier.subresourceRange.baseMipLevel = 0;
         barrier.subresourceRange.levelCount = 1;
