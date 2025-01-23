@@ -26,7 +26,7 @@ void main() {
     vec3 viewDir = normalize(cameraPosWorld - fragPosition);
 
     vec3 directionToLight = ubo.lightPosition.xyz - fragPosition;
-    float attenuation = 1.0 / dot(directionToLight, directionToLight);
+    float attenuation = 1.0 / dot(directionToLight, directionToLight) * 10;
     directionToLight = normalize(directionToLight);
 
     vec3  lightColor = ubo.lightColor.xyz* ubo.lightColor.w *  attenuation;

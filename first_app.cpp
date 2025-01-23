@@ -22,9 +22,11 @@ namespace ve {
         glm::mat4 view{1.0f};
         glm::mat4 inverseView{1.0f};
         glm::vec4 ambientLightColor{1.0f,1.0f,1.0f,0.02f};
-        glm::vec3 lightPosition{-0.31f,-15.613f,-1.07f};
-        alignas(16)glm::vec4 lightColor{213.0f,185.0f,255.0f,1.0f};
-        //lightColor{213.0f,185.0f,255.0f,1.0f};
+        glm::vec3 lightPosition{0.0f};
+        //lightPosition{-1.18f,-6.145f,-1.0255f};
+        alignas(16)glm::vec4 lightColor{1.0f, 1.0f, 1.0f, 1.0f}; //white
+        // lightColor{1.0f, 0.9f, 0.5f, 1.0f}; yellowish
+        //lightColor{213.0f,185.0f,255.0f,1.0f}; purple
 
     };
     FirstApp::FirstApp() { 
@@ -77,10 +79,11 @@ namespace ve {
         //create camera
         VeCamera camera{};
         auto viewerObject = VeGameObject::createGameObject();
-        viewerObject.transform.translation ={2.31,-6.713,-0.3};
-        viewerObject.transform.rotation = {-1.3f,4.7f,0.0f};
+        viewerObject.transform.translation ={0.3991f,-0.86753,4.95668};
+        viewerObject.transform.rotation = {-0.212f,3.16696f,0.0f};
         //camera controller
         InputController inputController{};
+        glm::vec3 lightPosition{0.0f};
         //game time
         auto currentTime = std::chrono::high_resolution_clock::now();
         //main loop
@@ -92,8 +95,13 @@ namespace ve {
             currentTime = newTime;
             frameTime = glm::min(frameTime, 0.1f); //clamp large frametimes
             //update camera based on input
-            inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, gameObjects.at(1));
+            // inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, gameObjects.at(1));
+            // inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, viewerObject);
+            inputController.movePosition(veWindow.getGLFWWindow(), frameTime, lightPosition);
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
+            std::cout << "Light Position:x " << lightPosition.x << std::endl;
+            std::cout << "Light Position:y " << lightPosition.y << std::endl;
+            std::cout << "Light Position:z " << lightPosition.z << std::endl;
             // std::cout << "Camera Position:x " << viewerObject.transform.translation.x << std::endl;
             // std::cout << "Camera Position:y " << viewerObject.transform.translation.y << std::endl;
             // std::cout << "Camera Position:z " << viewerObject.transform.translation.z << std::endl;
@@ -115,6 +123,7 @@ namespace ve {
                 globalUbo.projection = camera.getProjectionMatrix();
                 globalUbo.view = camera.getViewMatrix();
                 globalUbo.inverseView = camera.getInverseMatrix();
+                globalUbo.lightPosition = lightPosition;
                 uniformBuffers[frameIndex]->writeToBuffer(&globalUbo);
                 uniformBuffers[frameIndex]->flush();
                 //render

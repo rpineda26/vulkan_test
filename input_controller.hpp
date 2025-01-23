@@ -24,6 +24,8 @@ namespace ve{
             int zoomOut{GLFW_KEY_X};
         };
             void moveInPlane(GLFWwindow* window, float deltaTime, VeGameObject& gameObject);
+            //for testing lighting
+            void movePosition(GLFWwindow* window, float deltaTime, glm::vec3& lightPosition);
             KeyMappings keyMappings{};
             float moveSpeed{1.0f};
             float lookSpeed{0.5f};
