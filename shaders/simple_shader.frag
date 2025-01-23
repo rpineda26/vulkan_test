@@ -2,8 +2,9 @@
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 fragPosition;
 layout(location = 2) in vec3 fragNormal;
+layout(location = 3) in vec2 fragUv;
 layout(location = 0) out vec4 outColor;
-
+//camera view plus lighting
 layout(set = 0, binding = 0) uniform UniformBufferObject {
     mat4 projectionMatrix;
     mat4 viewMatrix;
@@ -13,6 +14,7 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     vec4 lightColor;
 
 } ubo;
+layout(set = 0, binding = 1) uniform sampler2D textureSampler; 
 layout(push_constant) uniform Push {
     mat4 modelMatrix;
     mat4 normalMatrix;
@@ -38,5 +40,6 @@ void main() {
     blinnTerm = pow(blinnTerm, 128.0);
     specularLight += ubo.lightColor.xyz * attenuation * blinnTerm;
 
-    outColor = vec4(diffuseLight * fragColor + specularLight * fragColor, 1.0);
+    vec3 texColor = texture(textureSampler, fragUv).rgb;
+    outColor = vec4(diffuseLight * fragColor + specularLight  * texColor, 2);
 }

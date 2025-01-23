@@ -19,7 +19,6 @@ namespace ve {
              
         private:
             void loadGameObjects();
-
             VeWindow veWindow{WIDTH, HEIGHT, "First App"};
             VeDevice veDevice{veWindow};
             VeRenderer veRenderer{veWindow, veDevice};
