@@ -1,20 +1,21 @@
-#include "ve_texture.hpp"
+#include "ve_normal_map.hpp"
 #include "buffer.hpp"
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 namespace ve{
-    VeTexture::VeTexture(VeDevice& device, const std::string& albedoPath): veDevice{device} {
-        VkFormat textureFormat = VK_FORMAT_R8G8B8A8_SRGB;
-        createTextureImage(textureFormat, albedoPath);
+    VeNormal::VeNormal(VeDevice& device,  const std::string& normalPath): veDevice{device} {
+        VkFormat normalFormat = VK_FORMAT_R8G8B8A8_UNORM;
+        createTextureImageNormal(normalFormat, normalPath);
     }
-    VeTexture::~VeTexture(){
-        vkDestroySampler(veDevice.device(), textureSampler, nullptr);
-        vkDestroyImageView(veDevice.device(), textureImageView, nullptr);
-        vkDestroyImage(veDevice.device(), textureImage, nullptr);
-        vkFreeMemory(veDevice.device(), textureImageMemory, nullptr);
+    VeNormal::~VeNormal(){
+
+        vkDestroySampler(veDevice.device(), normalSampler, nullptr);
+        vkDestroyImageView(veDevice.device(), normalImageView, nullptr);
+        vkDestroyImage(veDevice.device(), normalImage, nullptr);
+        vkFreeMemory(veDevice.device(), normalImageMemory, nullptr);
     }
-    void VeTexture::createTextureImage(VkFormat textureFormat, const std::string& path){
+
+    void VeNormal::createTextureImageNormal(VkFormat textureFormat, const std::string& path){
         int texWidth, texHeight, texChannels;
         stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         int mipLevels = std::floor(std::log2(std::max(texWidth, texHeight))) + 1;
@@ -42,11 +43,11 @@ namespace ve{
         imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         //create image
-        veDevice.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+        veDevice.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, normalImage, normalImageMemory);
         //copy buffer to image
-        transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL ,mipLevels);
-        veDevice.copyBufferToImage(stagingBuffer.getBuffer(), textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1);
-        generateMipMaps(mipLevels, texWidth, texHeight, textureFormat);
+        transitionImageLayoutNormal(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL ,mipLevels);
+        veDevice.copyBufferToImage(stagingBuffer.getBuffer(), normalImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1);
+        generateMipMapsNormal(mipLevels, texWidth, texHeight, textureFormat);
         //create image sampler
         textureLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         VkSamplerCreateInfo samplerInfo{};
@@ -64,13 +65,13 @@ namespace ve{
         samplerInfo.minLod = 0.0f;
         samplerInfo.maxLod = 1000;
         samplerInfo.mipLodBias = 0.0f;
-        if(vkCreateSampler(veDevice.device(), &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS){
+        if(vkCreateSampler(veDevice.device(), &samplerInfo, nullptr, &normalSampler) != VK_SUCCESS){
             throw std::runtime_error("failed to create texture sampler!");
         }
         //create Image View
         VkImageViewCreateInfo viewInfo{};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        viewInfo.image = textureImage;
+        viewInfo.image = normalImage;
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         viewInfo.format = textureFormat;
         viewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
@@ -83,12 +84,12 @@ namespace ve{
         viewInfo.subresourceRange.baseArrayLayer = 0;
         viewInfo.subresourceRange.layerCount = 1;
 
-        if(vkCreateImageView(veDevice.device(), &viewInfo, nullptr, &textureImageView) != VK_SUCCESS){
+        if(vkCreateImageView(veDevice.device(), &viewInfo, nullptr, &normalImageView) != VK_SUCCESS){
             throw std::runtime_error("failed to create texture image view!");
         }
         stbi_image_free(pixels);
     }
-    void VeTexture::transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, int mipLevels){
+    void VeNormal::transitionImageLayoutNormal(VkImageLayout oldLayout, VkImageLayout newLayout, int mipLevels){
         VkCommandBuffer commandBuffer = veDevice.beginSingleTimeCommands();
         VkImageMemoryBarrier barrier{};
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -96,7 +97,7 @@ namespace ve{
         barrier.newLayout = newLayout;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = textureImage;
+        barrier.image = normalImage;
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         barrier.subresourceRange.baseMipLevel = 0;
         barrier.subresourceRange.levelCount = mipLevels;
@@ -127,7 +128,7 @@ namespace ve{
         );
         veDevice.endSingleTimeCommands(commandBuffer);
     }
-    void VeTexture::generateMipMaps(int mipLevels, int texWidth, int texHeight, VkFormat textureFormat){
+    void VeNormal::generateMipMapsNormal(int mipLevels, int texWidth, int texHeight, VkFormat textureFormat){
         VkFormatProperties formatProperties;
         vkGetPhysicalDeviceFormatProperties(veDevice.getPhysicalDevice( ), textureFormat, &formatProperties);
         if(!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)){
@@ -138,7 +139,7 @@ namespace ve{
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = textureImage;
+        barrier.image = normalImage;
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         barrier.subresourceRange.baseMipLevel = 0;
         barrier.subresourceRange.levelCount = 1;
@@ -176,8 +177,8 @@ namespace ve{
             blit.dstSubresource.layerCount = 1;
             vkCmdBlitImage(
                 commandBuffer,
-                textureImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                normalImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                normalImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 1,
                 &blit,
                 VK_FILTER_LINEAR
@@ -212,4 +213,6 @@ namespace ve{
         );
         veDevice.endSingleTimeCommands(commandBuffer);
     }
+
+    
 }

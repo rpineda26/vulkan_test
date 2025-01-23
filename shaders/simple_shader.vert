@@ -3,10 +3,14 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 color;
 layout(location = 2) in vec3 normal;
 layout(location = 3) in vec2 uv;
+layout(location = 4) in vec3 tangent;
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec3 fragPosition;
 layout(location = 2) out vec3 fragNormal;
 layout(location = 3) out vec2 fragUV;
+layout(location = 4) out vec3 fragTangentPos;
+layout(location = 5) out vec3 fragTangentView;
+layout(location = 6) out vec3 fragTangentLight;
 layout(set = 0, binding = 0) uniform UniformBufferObject {
     mat4 projectionMatrix;
     mat4 viewMatrix;
@@ -24,8 +28,19 @@ layout(push_constant) uniform Push {
 void main(){
     vec4 positionWorld = push.modelMatrix * vec4(position, 1.0);
     gl_Position = ubo.projectionMatrix * (ubo.viewMatrix * positionWorld);
-    fragNormal = normalize(mat3(push.normalMatrix) * normal);
     fragPosition = positionWorld.xyz;
     fragColor = color;
+    fragNormal = normalize(vec3(mat3(push.normalMatrix) * normal));
     fragUV = uv;
+    vec3 T = normalize(mat3(push.normalMatrix) * tangent);
+    vec3 N = fragNormal; //for readability
+    T = normalize(T - dot(T, N) * N);
+    vec3 B = cross(N, T);
+
+    mat3 TBN = transpose(mat3(T, B, N));
+    vec3 cameraPosWorld = vec3(ubo.invViewMatrix * vec4(0.0, 0.0, 0.0, 1.0));
+    fragTangentPos = TBN * positionWorld.xyz;
+    fragTangentView = TBN * cameraPosWorld;
+    fragTangentLight = TBN * ubo.lightPosition;
+
 }

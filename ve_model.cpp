@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cstring>
 #include <unordered_map>
+#include <iostream>
 
 namespace std{
     template<> struct hash<ve::VeModel::Vertex>{
@@ -88,6 +89,7 @@ namespace ve{
         attributeDescriptions.push_back({1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)});
         attributeDescriptions.push_back({2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)});
         attributeDescriptions.push_back({3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)});
+        attributeDescriptions.push_back({4, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent)});
         return attributeDescriptions;
     }
     
@@ -137,6 +139,7 @@ namespace ve{
                         attrib.texcoords[2 * index.texcoord_index + 1],
                     };     
                 }
+    
                 //if vertex is unique, add to list
                 if(uniqueVertices.count(vertex) == 0){
                     uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
@@ -144,7 +147,28 @@ namespace ve{
                 }
                 indices.push_back(uniqueVertices[vertex]);
             }
+            //compute tangents for each triangle (access 3 vertices at each loop step)
+            for (long index = 0;index < indices.size(); index+=3){
+                //edges: edge1 = vertex2 - vertex1, edge2 = vertex3 - vertex1
+                glm::vec3 edge1 = vertices[indices[index + 1]].position - vertices[indices[index]].position;
+                glm::vec3 edge2 = vertices[indices[index + 2]].position - vertices[indices[index]].position;
+                //delta uv: deltaUV1 = uv2 - uv1, deltaUV2 = uv3 - uv1
+                glm::vec2 deltaUV1 = vertices[indices[index + 1]].uv - vertices[indices[index]].uv;
+                glm::vec2 deltaUV2 = vertices[indices[index + 2]].uv - vertices[indices[index]].uv;
+                //compute tangent
+                float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+                glm::vec3 tangent;
+                tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+                tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+                tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+                //store tangent for each triangle
+                vertices[indices[index]].tangent = tangent;
+                vertices[indices[index + 1]].tangent = tangent;
+                vertices[indices[index + 2]].tangent = tangent;
+
+            }
         }
     }
+
 
 }

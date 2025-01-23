@@ -1,6 +1,7 @@
 #include "first_app.hpp"
 #include "ve_camera.hpp"
 #include "ve_texture.hpp"
+#include "ve_normal_map.hpp"
 #include "input_controller.hpp"
 #include "buffer.hpp"
 #include "systems/simple_render_system.hpp"
@@ -33,6 +34,7 @@ namespace ve {
             .setMaxSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT)
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VeSwapChain::MAX_FRAMES_IN_FLIGHT)
             .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT)
             .build();
         loadGameObjects(); 
     }
@@ -56,13 +58,21 @@ namespace ve {
         auto globalSetLayout = VeDescriptorSetLayout::Builder(veDevice)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
             .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
-        //create texture
-        VeTexture texture{veDevice, "textures/brick_texture.png", "albedo"};
+        //create albedo
+        VeTexture texture{veDevice, "textures/brick_texture.png"};
         VkDescriptorImageInfo imageInfo{};
         imageInfo.imageLayout = texture.getLayout();
         imageInfo.imageView = texture.getImageView();
         imageInfo.sampler = texture.getSampler();
+        //create normal map
+        VeNormal normalMap{veDevice, "textures/brick_normal.png"};
+        VkDescriptorImageInfo normalImageInfo{};
+        normalImageInfo.imageLayout = normalMap.getLayout();
+        normalImageInfo.imageView = normalMap.getNormalImageView();
+        normalImageInfo.sampler = normalMap.getNormalSampler();
+        
         //create global descriptor pool
         std::vector<VkDescriptorSet> globalDescriptorSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT);
         for(int i = 0; i < globalDescriptorSets.size(); i++){
@@ -70,6 +80,7 @@ namespace ve {
             VeDescriptorWriter(*globalSetLayout, *globalPool)
                 .writeBuffer(0, &bufferInfo)
                 .writeImage(1, &imageInfo)
+                .writeImage(2, &normalImageInfo)
                 .build(globalDescriptorSets[i]);
         }
         //initialize render systems
