@@ -24,6 +24,8 @@ layout(push_constant) uniform Push {
     mat4 modelMatrix;
     mat4 normalMatrix;
 } push;
+
+float lightIntensity = 15.0f;
 void main() {
     //load albedo
     vec3 texColor = texture(textureSampler, fragUv).rgb;
@@ -40,13 +42,13 @@ void main() {
 
     // vec3 directionToLight = ubo.lightPosition.xyz - fragPosition;
     vec3 directionToLight = fragTangentLight - fragTangentPos;
-    float attenuation = 1.0 / dot(directionToLight, directionToLight) * 15;
+    float attenuation = 1.0 / dot(directionToLight, directionToLight);
     directionToLight = normalize(directionToLight);
 
     //diffused light
     vec3  lightColor = ubo.lightColor.xyz* ubo.lightColor.w *  attenuation;
     vec3 ambientLightColor = ubo.ambientLightColor.xyz  * ubo.ambientLightColor.w;
-    float cosAngIncidence = max(dot(surfaceNormal, directionToLight), 0);
+    float cosAngIncidence = max(dot(surfaceNormal, directionToLight), 0) * lightIntensity;
     vec3 diffuseLight = (lightColor * cosAngIncidence * texColor) + (ambientLightColor * texColor);
 
     //specular

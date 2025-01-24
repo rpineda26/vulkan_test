@@ -25,7 +25,7 @@ namespace ve {
         glm::vec4 ambientLightColor{1.0f,1.0f,1.0f,0.1f};
         glm::vec3 lightPosition{0.0f};
         //lightPosition{-1.18f,-6.145f,-1.0255f};
-        alignas(16)glm::vec4 lightColor{1.0f, 1.0f, 1.0f, 1.0f}; //white
+        alignas(16)glm::vec4 lightColor{1.0f, 0.9f, 0.5f, 1.0f}; //white
         // lightColor{1.0f, 0.9f, 0.5f, 1.0f}; yellowish
         //lightColor{213.0f,185.0f,255.0f,1.0f}; purple
     };
@@ -105,8 +105,8 @@ namespace ve {
             currentTime = newTime;
             frameTime = glm::min(frameTime, 0.1f); //clamp large frametimes
             //update camera based on input
-            inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, gameObjects.at(1));
-            // inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, viewerObject);
+            // inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, gameObjects.at(1));
+            inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, viewerObject);
             // inputController.movePosition(veWindow.getGLFWWindow(), frameTime, lightPosition);
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
             // std::cout << "Light Position:x " << lightPosition.x << std::endl;

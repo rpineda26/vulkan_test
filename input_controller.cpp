@@ -3,6 +3,7 @@
 namespace ve{
     void InputController::moveInPlane(GLFWwindow* window, float deltaTime, VeGameObject& gameObject){
         glm::vec3 rotate{0.0f};
+        //compute keyboard input contribution
         if(glfwGetKey(window, keyMappings.tiltUp) == GLFW_PRESS){
             rotate.x += 1.0f;
         }
@@ -15,6 +16,11 @@ namespace ve{
         if(glfwGetKey(window, keyMappings.tiltRight) == GLFW_PRESS){
             rotate.y += 1.0f;
         }
+        //mouse contribution
+        mouseOffset(window, deltaTime, gameObject);
+        rotate.y += mouseVariables.mouseDistanceX;
+        rotate.x -= mouseVariables.mouseDistanceY;
+        //calculate rotation
         if(glm::dot(rotate, rotate) > std::numeric_limits<float>::epsilon()){
             gameObject.transform.rotation += glm::normalize(rotate) * lookSpeed * deltaTime;
         }
@@ -113,5 +119,19 @@ namespace ve{
             // Return to the original pivot
             position += pivot;
         }
+    }
+    void InputController::mouseOffset(GLFWwindow* window, float deltaTime, VeGameObject& gameObject){
+        glfwGetCursorPos(window, &mouseVariables.mouseX, &mouseVariables.mouseY);
+        if(mouseVariables.firstMouse){
+            mouseVariables.lastMouseX = mouseVariables.mouseX;
+            mouseVariables.lastMouseY = mouseVariables.mouseY;
+            mouseVariables.firstMouse = false;
+        }
+        
+        mouseVariables.mouseDistanceX = mouseVariables.mouseX - mouseVariables.lastMouseX;
+        mouseVariables.mouseDistanceY = mouseVariables.mouseY - mouseVariables.lastMouseY;
+
+        mouseVariables.lastMouseX = mouseVariables.mouseX;
+        mouseVariables.lastMouseY = mouseVariables.mouseY;
     }
 }

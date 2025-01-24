@@ -20,14 +20,24 @@ namespace ve{
             int tiltLeft{GLFW_KEY_LEFT};
             int tiltRight{GLFW_KEY_RIGHT};
             //zoom
-            int zoomIn{GLFW_KEY_Z};
-            int zoomOut{GLFW_KEY_X};
+            // int zoomIn{GLFW_KEY_Z};
+            // int zoomOut{GLFW_KEY_X};
+        };
+        struct MouseVariables{
+            float dt, currTime, lastTime = 0.0;
+            double lastMouseX, lastMouseY, mouseX, mouseY, mouseDistanceX, mouseDistanceY = 0.0;
+            bool firstMouse = true;
         };
             void moveInPlane(GLFWwindow* window, float deltaTime, VeGameObject& gameObject);
             //for testing lighting
             void movePosition(GLFWwindow* window, float deltaTime, glm::vec3& lightPosition);
+            void mouseOffset(GLFWwindow* window, float deltaTime, VeGameObject& gameObject);
             KeyMappings keyMappings{};
+            MouseVariables mouseVariables{};
             float moveSpeed{1.0f};
             float lookSpeed{0.5f};
+        private:
+            
     };
+
 }
