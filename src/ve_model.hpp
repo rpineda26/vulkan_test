@@ -8,6 +8,10 @@
 #include <vector>
 #include <memory>
 
+#ifndef ENGINE_DIR
+#define ENGINE_DIR "../"
+#endif
+
 namespace ve{
     class VeModel{
     public:

@@ -4,8 +4,8 @@
 #include "ve_normal_map.hpp"
 #include "input_controller.hpp"
 #include "buffer.hpp"
-#include "systems/simple_render_system.hpp"
-#include "systems/point_light_system.hpp"
+#include "simple_render_system.hpp"
+#include "point_light_system.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE

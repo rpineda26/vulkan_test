@@ -1,5 +1,6 @@
 #include "ve_pipeline.hpp"
 #include "ve_model.hpp"
+
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -16,7 +17,8 @@ namespace ve{
         vkDestroyPipeline(veDevice.device(), graphicsPipeline, nullptr);
     }
     std::vector<char> VePipeline::readFile(const std::string& filepath){
-        std::ifstream file{filepath, std::ios::ate | std::ios::binary};
+        std::string fullPath = std::string(ENGINE_DIR) + filepath;
+        std::ifstream file{fullPath, std::ios::ate | std::ios::binary};
         if(!file.is_open()){
             throw std::runtime_error("failed to open file: " + filepath);
         }

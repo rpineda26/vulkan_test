@@ -17,7 +17,8 @@ namespace ve{
 
     void VeNormal::createTextureImageNormal(VkFormat textureFormat, const std::string& path){
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        std::string fullPath = std::string(ENGINE_DIR) + path;
+        stbi_uc* pixels = stbi_load(fullPath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         int mipLevels = std::floor(std::log2(std::max(texWidth, texHeight))) + 1;
         if(!pixels){
             throw std::runtime_error("failed to load texture image!");

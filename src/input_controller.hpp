@@ -34,8 +34,8 @@ namespace ve{
             void mouseOffset(GLFWwindow* window, float deltaTime, VeGameObject& gameObject);
             KeyMappings keyMappings{};
             MouseVariables mouseVariables{};
-            float moveSpeed{1.0f};
-            float lookSpeed{0.5f};
+            float moveSpeed{2.0f};
+            float lookSpeed{2.0f};
         private:
             
     };

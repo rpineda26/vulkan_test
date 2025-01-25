@@ -105,7 +105,8 @@ namespace ve{
         std::string warn;
         std::string err;
 
-        if(!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filePath.c_str())){
+        std::string fullPath = std::string(ENGINE_DIR) + filePath;
+        if(!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, fullPath.c_str())){
             throw std::runtime_error(warn + err);
         }
         vertices.clear();

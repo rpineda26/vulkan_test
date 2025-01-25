@@ -3,6 +3,10 @@
 #include <string>
 #include <vector>
 
+#ifndef ENGINE_DIR
+#define ENGINE_DIR "../"
+#endif
+
 namespace ve {
     struct PipelineConfigInfo {
         PipelineConfigInfo() = default;

@@ -4,6 +4,11 @@
 #include <vulkan/vulkan.h>
 
 #include <string>
+
+#ifndef ENGINE_DIR
+#define ENGINE_DIR "../"
+#endif
+
 namespace ve{
     class VeNormal{
         public:
