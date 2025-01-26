@@ -30,8 +30,8 @@ namespace ve {
             std::unique_ptr<VeDescriptorPool> globalPool{};
             std::vector<std::unique_ptr<VeTexture>> textures;
             std::vector<std::unique_ptr<VeNormal>> normalMaps;
-            std::vector<std::unique_ptr<VkDescriptorImageInfo>> textureInfos;
-            std::vector<std::unique_ptr<VkDescriptorImageInfo>> normalMapInfos;
+            std::vector<VkDescriptorImageInfo> textureInfos;
+            std::vector<VkDescriptorImageInfo> normalMapInfos;
 
             VeGameObject::Map gameObjects;
     };

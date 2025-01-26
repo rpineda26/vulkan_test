@@ -67,8 +67,8 @@ namespace ve {
             auto bufferInfo = uniformBuffers[i]->descriptorInfo();
             VeDescriptorWriter(*globalSetLayout, *globalPool)
                 .writeBuffer(0, &bufferInfo)
-                .writeImage(1, textureInfos[2].get())
-                .writeImage(2, normalMapInfos[2].get())
+                .writeImage(1, &textureInfos[3])
+                .writeImage(2, &normalMapInfos[3])
                 .build(globalDescriptorSets[i]);
         }
         //initialize render systems
@@ -172,12 +172,12 @@ namespace ve {
             imageInfo.imageLayout = textures[i]->getLayout();
             imageInfo.imageView = textures[i]->getImageView();
             imageInfo.sampler = textures[i]->getSampler();
-            textureInfos.push_back(std::make_unique<VkDescriptorImageInfo>(imageInfo));
+            textureInfos.push_back(VkDescriptorImageInfo(imageInfo));
             VkDescriptorImageInfo normalImageInfo{};
             normalImageInfo.imageLayout = normalMaps[i]->getLayout();
             normalImageInfo.imageView = normalMaps[i]->getNormalImageView();
             normalImageInfo.sampler = normalMaps[i]->getNormalSampler();
-            normalMapInfos.push_back(std::make_unique<VkDescriptorImageInfo>(normalImageInfo)); 
+            normalMapInfos.push_back(VkDescriptorImageInfo(normalImageInfo)); 
         }
     }
 }
