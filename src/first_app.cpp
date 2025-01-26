@@ -96,6 +96,8 @@ namespace ve {
         glm::vec3 lightPosition{-0.811988f, -6.00838f, 0.1497f};
         //game time
         auto currentTime = std::chrono::high_resolution_clock::now();
+        //initialize selected object to control
+        SelectedObject selectedObject = CAMERA;
         //main loop
         while (!veWindow.shouldClose()) {
             glfwPollEvents();
@@ -106,8 +108,9 @@ namespace ve {
             frameTime = glm::min(frameTime, 0.1f); //clamp large frametimes
             //update camera based on input
             // inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, gameObjects.at(1));
-            inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, viewerObject);
+            // inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, viewerObject);
             // inputController.movePosition(veWindow.getGLFWWindow(), frameTime, lightPosition);
+            inputController.inputLogic(veWindow.getGLFWWindow(), frameTime, gameObjects, viewerObject, lightPosition, selectedObject);
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
             // std::cout << "Light Position:x " << lightPosition.x << std::endl;
             // std::cout << "Light Position:y " << lightPosition.y << std::endl;

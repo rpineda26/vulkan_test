@@ -1,6 +1,43 @@
 #include "input_controller.hpp"
 
 namespace ve{
+    void InputController::inputLogic(GLFWwindow* window, float deltaTime, VeGameObject::Map& gameObjects, VeGameObject& camera, glm::vec3& lightPosition, SelectedObject& selectedObject){
+        if(glfwGetKey(window, keyMappings.selectCamera) == GLFW_PRESS){
+            selectedObject = CAMERA;
+        }
+        if(glfwGetKey(window, keyMappings.selectLight) == GLFW_PRESS){
+            selectedObject = LIGHT;
+        }
+        if(glfwGetKey(window, keyMappings.selectVase) == GLFW_PRESS){
+            selectedObject = VASE;
+        }
+        if(glfwGetKey(window, keyMappings.selectCube) == GLFW_PRESS){
+            selectedObject = CUBE;
+        }
+        if(glfwGetKey(window, keyMappings.selectFloor) == GLFW_PRESS){
+            selectedObject = FLOOR;
+        }
+        
+        switch(selectedObject){
+            case CAMERA:
+                moveInPlane(window, deltaTime, camera);
+                break;
+            case LIGHT:
+                movePosition(window, deltaTime, lightPosition);
+                break;
+            case VASE:
+                moveInPlane(window, deltaTime, gameObjects.at(0));
+                break;
+            case CUBE:
+                moveInPlane(window, deltaTime, gameObjects.at(1));
+                break;
+            case FLOOR:
+                moveInPlane(window, deltaTime, gameObjects.at(2));
+                break;
+            default:
+                break;
+        }
+    }
     void InputController::moveInPlane(GLFWwindow* window, float deltaTime, VeGameObject& gameObject){
         glm::vec3 rotate{0.0f};
         //compute keyboard input contribution

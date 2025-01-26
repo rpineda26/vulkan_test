@@ -14,6 +14,22 @@ this script includes running the executable file
 the executable file can be found at 'build/VulkanEngine.exe'
 
 
+Controls:
+keyboard input:
+//macros to select objects to move
+1 = select camera
+2 = select light source
+3 = select vase
+4 = select cube
+5 = select floor
+
+//movement
+wasd - walk
+arrow keys - rotate
+mouse nive - rotate
+
+
+
 Here are the online references for this program
 general project structure and setup:
 https://www.youtube.com/watch?v=Y9U9IE0gVHA&list=PL8327DO66nu9qYVKLDmdLW_84-yE4auCR&index=1

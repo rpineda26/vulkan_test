@@ -2,11 +2,18 @@
 
 #include "ve_game_object.hpp"
 #include "ve_window.hpp"
-
+#include "frame_info.hpp"
+#include "ve_game_object.hpp"
 namespace ve{
     class InputController{
         public:
         struct KeyMappings{
+            //macro keys for selecting objects
+            int selectCamera{GLFW_KEY_1};
+            int selectLight{GLFW_KEY_2};
+            int selectVase{GLFW_KEY_3};
+            int selectCube{GLFW_KEY_4};
+            int selectFloor{GLFW_KEY_5};
             //movement
             int forward{GLFW_KEY_W};
             int backward{GLFW_KEY_S};
@@ -28,6 +35,7 @@ namespace ve{
             double lastMouseX, lastMouseY, mouseX, mouseY, mouseDistanceX, mouseDistanceY = 0.0;
             bool firstMouse = true;
         };
+            void inputLogic(GLFWwindow* window, float deltaTime, VeGameObject::Map& gameObjects, VeGameObject& camera, glm::vec3& lightPosition, SelectedObject& selectedObject);
             void moveInPlane(GLFWwindow* window, float deltaTime, VeGameObject& gameObject);
             //for testing lighting
             void movePosition(GLFWwindow* window, float deltaTime, glm::vec3& lightPosition);
@@ -36,6 +44,7 @@ namespace ve{
             MouseVariables mouseVariables{};
             float moveSpeed{2.0f};
             float lookSpeed{2.0f};
+            
         private:
             
     };

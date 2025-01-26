@@ -5,6 +5,13 @@
 #include <vulkan/vulkan.h>
 
 namespace ve{
+    typedef enum SelectedObject{
+        CAMERA = 1,
+        LIGHT = 2,
+        VASE = 3,
+        CUBE = 4,
+        FLOOR = 5
+    } SelectedObject;
     struct FrameInfo{
         int frameIndex;
         float frameTime;
