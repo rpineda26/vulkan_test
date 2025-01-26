@@ -99,22 +99,22 @@ namespace ve{
 
         // Movement controls
         if (glfwGetKey(window, keyMappings.forward) == GLFW_PRESS) {
-            movement.z -= 1.0f;  // Move forward
+            movement.x+= 1.0f;  // Move forward
         }
         if (glfwGetKey(window, keyMappings.backward) == GLFW_PRESS) {
-            movement.z += 1.0f;  // Move backward
+            movement.x -= 1.0f;  // Move backward
         }
         if (glfwGetKey(window, keyMappings.leftward) == GLFW_PRESS) {
-            movement.x -= 1.0f;  // Move left
+            movement.z += 1.0f;  // Move left
         }
         if (glfwGetKey(window, keyMappings.rightward) == GLFW_PRESS) {
-            movement.x += 1.0f;  // Move right
+            movement.z -= 1.0f;  // Move right
         }
         if (glfwGetKey(window, keyMappings.upward) == GLFW_PRESS) {
-            movement.y += 1.0f;  // Move up
+            movement.y -= 1.0f;  // Move up
         }
         if (glfwGetKey(window, keyMappings.downward) == GLFW_PRESS) {
-            movement.y -= 1.0f;  // Move down
+            movement.y += 1.0f;  // Move down
         }
 
         // Apply movement

@@ -86,7 +86,7 @@ namespace ve {
             VeDescriptorWriter(VeDescriptorSetLayout &setLayout, VeDescriptorPool &pool);
             
             VeDescriptorWriter &writeBuffer(uint32_t binding, VkDescriptorBufferInfo *bufferInfo);
-            VeDescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo *imageInfo);
+            VeDescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo);
             
             bool build(VkDescriptorSet &set);
             void overwrite(VkDescriptorSet &set);
