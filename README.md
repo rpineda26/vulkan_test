@@ -1,4 +1,5 @@
 simple vulkan graphics engine
+UPDATE: Press space bar to change textures
 
 dependencies: Vulkan, GLFW, GLM
 provided dependencies: tinyobj, stb_image
