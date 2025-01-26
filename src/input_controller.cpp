@@ -37,6 +37,7 @@ namespace ve{
             default:
                 break;
         }
+        changeTexture(window, gameObjects);
     }
     void InputController::moveInPlane(GLFWwindow* window, float deltaTime, VeGameObject& gameObject){
         glm::vec3 rotate{0.0f};
@@ -99,22 +100,22 @@ namespace ve{
 
         // Movement controls
         if (glfwGetKey(window, keyMappings.forward) == GLFW_PRESS) {
-            movement.z -= 1.0f;  // Move forward
+            movement.x+= 1.0f;  // Move forward
         }
         if (glfwGetKey(window, keyMappings.backward) == GLFW_PRESS) {
-            movement.z += 1.0f;  // Move backward
+            movement.x -= 1.0f;  // Move backward
         }
         if (glfwGetKey(window, keyMappings.leftward) == GLFW_PRESS) {
-            movement.x -= 1.0f;  // Move left
+            movement.z += 1.0f;  // Move left
         }
         if (glfwGetKey(window, keyMappings.rightward) == GLFW_PRESS) {
-            movement.x += 1.0f;  // Move right
+            movement.z -= 1.0f;  // Move right
         }
         if (glfwGetKey(window, keyMappings.upward) == GLFW_PRESS) {
-            movement.y += 1.0f;  // Move up
+            movement.y -= 1.0f;  // Move up
         }
         if (glfwGetKey(window, keyMappings.downward) == GLFW_PRESS) {
-            movement.y -= 1.0f;  // Move down
+            movement.y += 1.0f;  // Move down
         }
 
         // Apply movement
@@ -170,5 +171,12 @@ namespace ve{
 
         mouseVariables.lastMouseX = mouseVariables.mouseX;
         mouseVariables.lastMouseY = mouseVariables.mouseY;
+    }
+    void InputController::changeTexture(GLFWwindow* window, VeGameObject::Map& gameObjects){
+        if(glfwGetKey(window, keyMappings.nextTexture) == GLFW_PRESS){
+            for(auto& gameObject : gameObjects){
+                gameObject.second.model->setTextureIndex((gameObject.second.model->getTextureIndex() + 1) % 4);
+            }
+        }
     }
 }

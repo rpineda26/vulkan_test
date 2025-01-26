@@ -106,12 +106,12 @@ namespace ve {
     }
     
     bool VeDescriptorPool::allocateDescriptor(
-        const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptor) const {
+        const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptor, uint32_t descriptorCount) const {
         VkDescriptorSetAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocInfo.descriptorPool = descriptorPool;
         allocInfo.pSetLayouts = &descriptorSetLayout;
-        allocInfo.descriptorSetCount = 1;
+        allocInfo.descriptorSetCount = descriptorCount;
         
         // Might want to create a "DescriptorPoolManager" class that handles this case, and builds
         // a new pool whenever an old pool fills up. But this is beyond our current scope
@@ -161,14 +161,14 @@ namespace ve {
     }
     
     VeDescriptorWriter &VeDescriptorWriter::writeImage(
-        uint32_t binding, VkDescriptorImageInfo *imageInfo) {
+        uint32_t binding, VkDescriptorImageInfo *imageInfo, uint32_t descriptorCount) {
 
         assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding");
         
         auto &bindingDescription = setLayout.bindings[binding];
         
         assert(
-            bindingDescription.descriptorCount == 1 &&
+            bindingDescription.descriptorCount >= descriptorCount &&
             "Binding single descriptor info, but binding expects multiple");
         
         VkWriteDescriptorSet write{};
@@ -176,16 +176,18 @@ namespace ve {
         write.descriptorType = bindingDescription.descriptorType;
         write.dstBinding = binding;
         write.pImageInfo = imageInfo;
-        write.descriptorCount = 1;
+        write.descriptorCount = descriptorCount;
         
         writes.push_back(write);
         return *this;
     }
     
     bool VeDescriptorWriter::build(VkDescriptorSet &set) {
-        bool success = pool.allocateDescriptor(setLayout.getDescriptorSetLayout(), set);
+        bool success = pool.allocateDescriptor(setLayout.getDescriptorSetLayout(), set, 1);
         if (!success) {
-            return false;
+            bool retry = pool.allocateDescriptor(setLayout.getDescriptorSetLayout(), set, 5);
+            if (!retry)
+                return false;
         }
         overwrite(set);
         return true;

@@ -1,7 +1,5 @@
 #include "first_app.hpp"
 #include "ve_camera.hpp"
-#include "ve_texture.hpp"
-#include "ve_normal_map.hpp"
 #include "input_controller.hpp"
 #include "buffer.hpp"
 #include "simple_render_system.hpp"
@@ -31,12 +29,14 @@ namespace ve {
     };
     FirstApp::FirstApp() { 
         globalPool = VeDescriptorPool::Builder(veDevice)
-            .setMaxSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT)
+            .setMaxSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT * (1 +  10))  
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VeSwapChain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5)
+            .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
             .build();
         loadGameObjects(); 
+        loadTextures();
     }
     FirstApp::~FirstApp() {}
 
@@ -56,31 +56,19 @@ namespace ve {
         }
         //bind descriptor set layout
         auto globalSetLayout = VeDescriptorSetLayout::Builder(veDevice)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-            .addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 1)
+            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5)
+            .addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5)
             .build();
-        //create albedo
-        VeTexture texture{veDevice, "textures/brick_texture.png"};
-        VkDescriptorImageInfo imageInfo{};
-        imageInfo.imageLayout = texture.getLayout();
-        imageInfo.imageView = texture.getImageView();
-        imageInfo.sampler = texture.getSampler();
-        //create normal map
-        VeNormal normalMap{veDevice, "textures/brick_normal.png"};
-        VkDescriptorImageInfo normalImageInfo{};
-        normalImageInfo.imageLayout = normalMap.getLayout();
-        normalImageInfo.imageView = normalMap.getNormalImageView();
-        normalImageInfo.sampler = normalMap.getNormalSampler();
-        
+
         //create global descriptor pool
         std::vector<VkDescriptorSet> globalDescriptorSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT);
         for(int i = 0; i < globalDescriptorSets.size(); i++){
             auto bufferInfo = uniformBuffers[i]->descriptorInfo();
             VeDescriptorWriter(*globalSetLayout, *globalPool)
                 .writeBuffer(0, &bufferInfo)
-                .writeImage(1, &imageInfo)
-                .writeImage(2, &normalImageInfo)
+                .writeImage(1, textureInfos.data(),5)
+                .writeImage(2, normalMapInfos.data(),5)
                 .build(globalDescriptorSets[i]);
         }
         //initialize render systems
@@ -106,21 +94,11 @@ namespace ve {
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
             frameTime = glm::min(frameTime, 0.1f); //clamp large frametimes
-            //update camera based on input
-            // inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, gameObjects.at(1));
-            // inputController.moveInPlane(veWindow.getGLFWWindow(), frameTime, viewerObject);
-            // inputController.movePosition(veWindow.getGLFWWindow(), frameTime, lightPosition);
+
+            //update objects based on input
             inputController.inputLogic(veWindow.getGLFWWindow(), frameTime, gameObjects, viewerObject, lightPosition, selectedObject);
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
-            // std::cout << "Light Position:x " << lightPosition.x << std::endl;
-            // std::cout << "Light Position:y " << lightPosition.y << std::endl;
-            // std::cout << "Light Position:z " << lightPosition.z << std::endl;
-            // std::cout << "Camera Position:x " << viewerObject.transform.translation.x << std::endl;
-            // std::cout << "Camera Position:y " << viewerObject.transform.translation.y << std::endl;
-            // std::cout << "Camera Position:z " << viewerObject.transform.translation.z << std::endl;
-            // std::cout << "Camera Rotation:x " << viewerObject.transform.rotation.x << std::endl;
-            // std::cout << "Camera Rotation:y " << viewerObject.transform.rotation.y << std::endl;
-            // std::cout << "Camera Rotation:z " << viewerObject.transform.rotation.z << std::endl;
+ 
 
             //setup viewing projection
             float aspect = veRenderer.getAspectRatio();
@@ -153,6 +131,7 @@ namespace ve {
     void FirstApp::loadGameObjects() {
         //object 1: cube
         std::shared_ptr<VeModel> veModel = VeModel::createModelFromFile(veDevice, "models/smooth_vase.obj");
+        veModel->setTextureIndex(1);
         auto vase = VeGameObject::createGameObject();
         vase.model = veModel;
         vase.transform.translation = {0.5f, 0.5f, 0.0f};
@@ -161,6 +140,7 @@ namespace ve {
         gameObjects.emplace(vase.getId(),std::move(vase));
         //vase
         veModel = VeModel::createModelFromFile(veDevice, "models/cube.obj");
+        veModel->setTextureIndex(0);
         auto cube = VeGameObject::createGameObject();
         cube.model = veModel;
         cube.transform.translation = {1.5f, 0.5f, 0.0f};
@@ -169,6 +149,7 @@ namespace ve {
         gameObjects.emplace(cube.getId(),std::move(cube));
         //object 2: floor
         veModel = VeModel::createModelFromFile(veDevice, "models/quad.obj");
+        veModel->setTextureIndex(3);
         auto quad = VeGameObject::createGameObject();
         quad.model = veModel;
         quad.transform.translation = {0.0f, 0.5f, 0.0f};
@@ -176,5 +157,30 @@ namespace ve {
         quad.color = {103.0f,242.0f,209.0f};//light green
         gameObjects.emplace(quad.getId(),std::move(quad));
     }
-
+    void FirstApp::loadTextures(){
+        textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/brick_texture.png"));
+        textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/metal.tga"));
+        textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/wood.png"));
+        textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/wall_gray.png"));
+        textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/tile.png"));
+        //normal maps
+        normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/brick_normal.png"));
+        normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/metal_normal.tga"));
+        normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wood_normal.png"));
+        normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wall_gray_normal.png"));
+        normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/tile_normal.png"));
+        //get image infos
+        for(int i = 0; i < textures.size(); i++){
+            VkDescriptorImageInfo imageInfo{};
+            imageInfo.imageLayout = textures[i]->getLayout();
+            imageInfo.imageView = textures[i]->getImageView();
+            imageInfo.sampler = textures[i]->getSampler();
+            textureInfos.push_back(VkDescriptorImageInfo(imageInfo));
+            VkDescriptorImageInfo normalImageInfo{};
+            normalImageInfo.imageLayout = normalMaps[i]->getLayout();
+            normalImageInfo.imageView = normalMaps[i]->getNormalImageView();
+            normalImageInfo.sampler = normalMaps[i]->getNormalSampler();
+            normalMapInfos.push_back(VkDescriptorImageInfo(normalImageInfo)); 
+        }
+    }
 }
