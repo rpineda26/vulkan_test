@@ -41,6 +41,8 @@ namespace ve{
         static std::unique_ptr<VeModel> createModelFromFile(VeDevice& device, const std::string& filePath);
         void bind(VkCommandBuffer commandBuffer);
         void draw(VkCommandBuffer commandBuffer);
+        uint32_t getTextureIndex() const {return textureIndex;}
+        void setTextureIndex(uint32_t index) {textureIndex = index;}
 
     private:
         void createVertexBuffers(const std::vector<Vertex>& vertices);
@@ -54,5 +56,7 @@ namespace ve{
         bool hasIndexBuffer{false};
         std::unique_ptr<VeBuffer> indexBuffer;
         uint32_t indexCount;
+        uint32_t textureIndex{0};
+
     };
 }

@@ -17,22 +17,23 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     vec4 lightColor;
 
 } ubo;
-layout(set = 0, binding = 1) uniform sampler2D textureSampler; 
-layout(set = 0, binding = 2) uniform sampler2D normalSampler;
+layout(set = 0, binding = 1) uniform sampler2D textureSampler[5]; 
+layout(set = 0, binding = 2) uniform sampler2D normalSampler[5];
 
 layout(push_constant) uniform Push {
     mat4 modelMatrix;
     mat4 normalMatrix;
+    uint textureIndex;
 } push;
 
 float lightIntensity = 15.0f;
 void main() {
     //load albedo
-    vec3 texColor = texture(textureSampler, fragUv).rgb;
+    vec3 texColor = texture(textureSampler[push.textureIndex], fragUv).rgb;
     
     //load normal map
     // vec3 normalMap = normalize(fragNormal);
-    vec3 surfaceNormal = texture(normalSampler, fragUv).rgb;
+    vec3 surfaceNormal = texture(normalSampler[push.textureIndex], fragUv).rgb;
     surfaceNormal = normalize(surfaceNormal * 2.0 - 1.0);
 
     vec3 specularLight = vec3(0.0);

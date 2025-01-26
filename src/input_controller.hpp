@@ -26,6 +26,8 @@ namespace ve{
             int tiltDown{GLFW_KEY_DOWN};
             int tiltLeft{GLFW_KEY_LEFT};
             int tiltRight{GLFW_KEY_RIGHT};
+            //change texture
+            int nextTexture{GLFW_KEY_SPACE};
             //zoom
             // int zoomIn{GLFW_KEY_Z};
             // int zoomOut{GLFW_KEY_X};
@@ -40,6 +42,7 @@ namespace ve{
             //for testing lighting
             void movePosition(GLFWwindow* window, float deltaTime, glm::vec3& lightPosition);
             void mouseOffset(GLFWwindow* window, float deltaTime, VeGameObject& gameObject);
+            void changeTexture(GLFWwindow* window, VeGameObject::Map& gameObjects);
             KeyMappings keyMappings{};
             MouseVariables mouseVariables{};
             float moveSpeed{2.0f};

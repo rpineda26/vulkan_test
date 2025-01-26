@@ -11,6 +11,7 @@ namespace ve {
     struct SimplePushConstantData {
         glm::mat4 modelMatrix{1.0f};
         glm::mat4 normalMatrix{1.0f};
+        uint32_t textureIndex{0};
     };
 
     SimpleRenderSystem::SimpleRenderSystem(
@@ -74,6 +75,7 @@ namespace ve {
             SimplePushConstantData push{};
             push.modelMatrix =  obj.transform.mat4();
             push.normalMatrix = obj.transform.normalMatrix();
+            push.textureIndex = obj.model->getTextureIndex();
             vkCmdPushConstants(
                 frameInfo.commandBuffer,
                 pipelineLayout,

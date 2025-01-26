@@ -29,10 +29,10 @@ namespace ve {
     };
     FirstApp::FirstApp() { 
         globalPool = VeDescriptorPool::Builder(veDevice)
-            .setMaxSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT * 10)
+            .setMaxSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT * (1 +  10))  
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VeSwapChain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5)
             .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
             .build();
         loadGameObjects(); 
@@ -56,9 +56,9 @@ namespace ve {
         }
         //bind descriptor set layout
         auto globalSetLayout = VeDescriptorSetLayout::Builder(veDevice)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-            .addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 1)
+            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5)
+            .addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5)
             .build();
 
         //create global descriptor pool
@@ -67,8 +67,8 @@ namespace ve {
             auto bufferInfo = uniformBuffers[i]->descriptorInfo();
             VeDescriptorWriter(*globalSetLayout, *globalPool)
                 .writeBuffer(0, &bufferInfo)
-                .writeImage(1, &textureInfos[3])
-                .writeImage(2, &normalMapInfos[3])
+                .writeImage(1, textureInfos.data(),5)
+                .writeImage(2, normalMapInfos.data(),5)
                 .build(globalDescriptorSets[i]);
         }
         //initialize render systems
@@ -131,6 +131,7 @@ namespace ve {
     void FirstApp::loadGameObjects() {
         //object 1: cube
         std::shared_ptr<VeModel> veModel = VeModel::createModelFromFile(veDevice, "models/smooth_vase.obj");
+        veModel->setTextureIndex(1);
         auto vase = VeGameObject::createGameObject();
         vase.model = veModel;
         vase.transform.translation = {0.5f, 0.5f, 0.0f};
@@ -139,6 +140,7 @@ namespace ve {
         gameObjects.emplace(vase.getId(),std::move(vase));
         //vase
         veModel = VeModel::createModelFromFile(veDevice, "models/cube.obj");
+        veModel->setTextureIndex(0);
         auto cube = VeGameObject::createGameObject();
         cube.model = veModel;
         cube.transform.translation = {1.5f, 0.5f, 0.0f};
@@ -147,6 +149,7 @@ namespace ve {
         gameObjects.emplace(cube.getId(),std::move(cube));
         //object 2: floor
         veModel = VeModel::createModelFromFile(veDevice, "models/quad.obj");
+        veModel->setTextureIndex(3);
         auto quad = VeGameObject::createGameObject();
         quad.model = veModel;
         quad.transform.translation = {0.0f, 0.5f, 0.0f};

@@ -68,7 +68,7 @@ namespace ve {
             VeDescriptorPool &operator=(const VeDescriptorPool &) = delete;
             
             bool allocateDescriptor(
-                const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptor) const;
+                const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptor, uint32_t descriptorCount) const;
             
             void freeDescriptors(std::vector<VkDescriptorSet> &descriptors) const;
             
@@ -86,7 +86,7 @@ namespace ve {
             VeDescriptorWriter(VeDescriptorSetLayout &setLayout, VeDescriptorPool &pool);
             
             VeDescriptorWriter &writeBuffer(uint32_t binding, VkDescriptorBufferInfo *bufferInfo);
-            VeDescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo);
+            VeDescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo, uint32_t descriptorCount);
             
             bool build(VkDescriptorSet &set);
             void overwrite(VkDescriptorSet &set);

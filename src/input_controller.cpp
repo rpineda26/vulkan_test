@@ -37,6 +37,7 @@ namespace ve{
             default:
                 break;
         }
+        changeTexture(window, gameObjects);
     }
     void InputController::moveInPlane(GLFWwindow* window, float deltaTime, VeGameObject& gameObject){
         glm::vec3 rotate{0.0f};
@@ -170,5 +171,12 @@ namespace ve{
 
         mouseVariables.lastMouseX = mouseVariables.mouseX;
         mouseVariables.lastMouseY = mouseVariables.mouseY;
+    }
+    void InputController::changeTexture(GLFWwindow* window, VeGameObject::Map& gameObjects){
+        if(glfwGetKey(window, keyMappings.nextTexture) == GLFW_PRESS){
+            for(auto& gameObject : gameObjects){
+                gameObject.second.model->setTextureIndex((gameObject.second.model->getTextureIndex() + 1) % 4);
+            }
+        }
     }
 }
