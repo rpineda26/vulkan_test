@@ -84,12 +84,16 @@ void VeDevice::createInstance() {
   VkInstanceCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   createInfo.pApplicationInfo = &appInfo;
-  createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 
   auto extensions = getRequiredExtensions();
+  if(setMACOSExtensionSupport()){
+    std::cout << "MACOS extension supported" << std::endl;
+    extensions.push_back("VK_KHR_portability_subset");
+    createInfo.flags |= 0x00000001;
+  }
   createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
   createInfo.ppEnabledExtensionNames = extensions.data();
-
+  
   VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
   if (enableValidationLayers) {
     createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
@@ -261,6 +265,24 @@ bool VeDevice::checkValidationLayerSupport() {
   return true;
 }
 
+bool VeDevice::setMACOSExtensionSupport(){
+  // For updated MACOS: Add VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
+  bool portabilitySupported = false;
+  uint32_t extensionCount = 0;
+  vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+
+  std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+  vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, availableExtensions.data());
+
+  for (const auto &extension : availableExtensions) {
+    if (std::strcmp(extension.extensionName, "VK_KHR_portability_enumeration") == 0) {
+      portabilitySupported = true;
+      break;
+    }
+  }
+  return portabilitySupported;
+}
+
 std::vector<const char *> VeDevice::getRequiredExtensions() {
   uint32_t glfwExtensionCount = 0;
   const char **glfwExtensions;
@@ -271,8 +293,7 @@ std::vector<const char *> VeDevice::getRequiredExtensions() {
   if (enableValidationLayers) {
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   }
-  // For updated MACOS: Add VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
-  extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+  
   extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
   return extensions;
 }

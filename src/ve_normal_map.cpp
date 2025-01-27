@@ -1,6 +1,8 @@
 #include "ve_normal_map.hpp"
 #include "buffer.hpp"
 #include <stb_image.h>
+#include <stdexcept>
+#include <cmath>
 
 namespace ve{
     VeNormal::VeNormal(VeDevice& device,  const std::string& normalPath): veDevice{device} {

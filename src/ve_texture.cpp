@@ -4,6 +4,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <stdexcept>
+#include <cmath>
 namespace ve{
     VeTexture::VeTexture(VeDevice& device, const std::string& albedoPath): veDevice{device} {
         VkFormat textureFormat = VK_FORMAT_R8G8B8A8_SRGB;

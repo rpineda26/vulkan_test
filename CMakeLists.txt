@@ -74,7 +74,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
  
 set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
- 
+ #if using windows
 if (WIN32)
   message(STATUS "CREATING BUILD FOR WINDOWS")
  
@@ -111,7 +111,10 @@ elseif (UNIX)
     )
     target_link_libraries(${PROJECT_NAME} glfw ${Vulkan_LIBRARIES})
 endif()
- 
+ #if using MacOS define MACOS macro to be used in device.hpp and first_app.cpp when calling add poolflags to descriptorPool
+ if(APPLE)
+    add_definitions(-DMACOS)  # Define MACOS macro when building for macOS
+endif()
  
 ############## Build SHADERS #######################
  
