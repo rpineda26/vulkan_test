@@ -4,9 +4,9 @@ UPDATE: Press space bar to change textures
 dependencies: Vulkan, GLFW, GLM
 provided dependencies: tinyobj, stb_image
 
-to exectute the program:
+to build and exectute the program:
 ==unix systems==
-`chmod +x`
+`chmod +x unixBuild.sh`
 `./unixhBuild.sh`
 this script includes running the executable file
 
