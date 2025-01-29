@@ -88,7 +88,7 @@ void VeDevice::createInstance() {
   auto extensions = getRequiredExtensions();
   if(setMACOSExtensionSupport()){
     std::cout << "MACOS extension supported" << std::endl;
-    extensions.push_back("VK_KHR_portability_subset");
+    extensions.push_back("VK_KHR_portability_enumeration");
     createInfo.flags |= 0x00000001;
   }
   createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());

@@ -102,6 +102,15 @@ if (WIN32)
   )
  
   target_link_libraries(${PROJECT_NAME} glfw3 vulkan-1)
+elseif (APPLE)
+  message(STATUS "CREATING BUILD FOR MACOS")
+  add_definitions(-DMACOS)  # Define MACOS macro when building for macOS
+  target_include_directories(${PROJECT_NAME} PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${TINYOBJ_PATH}
+    ${STB_PATH}
+  )
+  target_link_libraries(${PROJECT_NAME} glfw ${Vulkan_LIBRARIES})
 elseif (UNIX)
     message(STATUS "CREATING BUILD FOR UNIX")
     target_include_directories(${PROJECT_NAME} PUBLIC
@@ -112,9 +121,7 @@ elseif (UNIX)
     target_link_libraries(${PROJECT_NAME} glfw ${Vulkan_LIBRARIES})
 endif()
  #if using MacOS define MACOS macro to be used in device.hpp and first_app.cpp when calling add poolflags to descriptorPool
- if(APPLE)
-    add_definitions(-DMACOS)  # Define MACOS macro when building for macOS
-endif()
+ 
  
 ############## Build SHADERS #######################
  
