@@ -15,7 +15,7 @@ namespace ve {
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
         window = glfwCreateWindow(width, height, windowName.c_str(), nullptr, nullptr);
         glfwSetWindowUserPointer(window, this);
-        glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
+        // glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
         
     }

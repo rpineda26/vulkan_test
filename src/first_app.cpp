@@ -5,6 +5,10 @@
 #include "simple_render_system.hpp"
 #include "point_light_system.hpp"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
+
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
@@ -88,6 +92,14 @@ namespace ve {
         auto currentTime = std::chrono::high_resolution_clock::now();
         //initialize selected object to control
         SelectedObject selectedObject = CAMERA;
+
+        //imgui setup
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGui::StyleColorsDark();
+        ImGui_ImplGlfw_InitForVulkan(veWindow.getGLFWWindow(), true);
+        ImGui_ImplVulkan_InitInfo init_info = {};
+
         //main loop
         while (!veWindow.shouldClose()) {
             glfwPollEvents();

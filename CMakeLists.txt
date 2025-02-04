@@ -67,9 +67,15 @@ if (NOT STB_PATH)
   message(STATUS "STB_PATH not specified in .env.cmake, using external/stb_image")
   set(STB_PATH external/stb_image)
 endif()
+
+if( NOT IMGUI_PATH)
+  message(STATUS "IMGUI_PATH not specified in .env.cmake, using external/imgui")
+  set(IMGUI_PATH external/imgui)
+endif()
+
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
- 
-add_executable(${PROJECT_NAME} ${SOURCES})
+ file(GLOB_RECURSE IMGUI_SOURCES ${IMGUI_PATH}/*.cpp)
+add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SOURCES})
  
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
  
@@ -92,6 +98,7 @@ if (WIN32)
     ${Vulkan_INCLUDE_DIRS}
     ${TINYOBJ_PATH}
     ${STB_PATH}
+    ${IMGUI_PATH}
     ${GLFW_INCLUDE_DIRS}
     ${GLM_PATH}
     )
@@ -109,6 +116,7 @@ elseif (APPLE)
     ${PROJECT_SOURCE_DIR}/src
     ${TINYOBJ_PATH}
     ${STB_PATH}
+    ${IMGUI_PATH}
   )
   target_link_libraries(${PROJECT_NAME} glfw ${Vulkan_LIBRARIES})
 elseif (UNIX)
@@ -117,6 +125,7 @@ elseif (UNIX)
       ${PROJECT_SOURCE_DIR}/src
       ${TINYOBJ_PATH}
       ${STB_PATH}
+      ${IMGUI_PATH}
     )
     target_link_libraries(${PROJECT_NAME} glfw ${Vulkan_LIBRARIES})
 endif()
