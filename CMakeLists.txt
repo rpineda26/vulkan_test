@@ -73,8 +73,9 @@ if( NOT IMGUI_PATH)
   set(IMGUI_PATH external/imgui)
 endif()
 
+#create executables from all .cpp files in src directory and imgui dependency
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
- file(GLOB_RECURSE IMGUI_SOURCES ${IMGUI_PATH}/*.cpp)
+file(GLOB_RECURSE IMGUI_SOURCES ${IMGUI_PATH}/*.cpp)
 add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SOURCES})
  
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)

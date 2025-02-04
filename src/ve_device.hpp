@@ -40,12 +40,13 @@ class VeDevice {
   VeDevice& operator=(VeDevice &&) = delete;
 
   VkCommandPool getCommandPool() { return commandPool; }
+  VkInstance getInstance() { return instance; }
   VkDevice device() { return device_; }
   VkPhysicalDevice getPhysicalDevice() { return physicalDevice; }
   VkSurfaceKHR surface() { return surface_; }
   VkQueue graphicsQueue() { return graphicsQueue_; }
   VkQueue presentQueue() { return presentQueue_; }
-
+  uint32_t graphicsQueueFamilyIndex() { return findPhysicalQueueFamilies().graphicsFamily; }
   SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(physicalDevice); }
   uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
   QueueFamilyIndices findPhysicalQueueFamilies() { return findQueueFamilies(physicalDevice); }

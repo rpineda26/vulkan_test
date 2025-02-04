@@ -12,8 +12,8 @@
 namespace ve {
     class FirstApp{
         public:
-            static constexpr int WIDTH = 800;
-            static constexpr int HEIGHT = 600;
+            static constexpr int WIDTH = 1280;
+            static constexpr int HEIGHT = 720;
             FirstApp();
             ~FirstApp();
             FirstApp(const FirstApp&) = delete;
@@ -23,10 +23,14 @@ namespace ve {
         private:
             void loadGameObjects();
             void loadTextures();
+            // void createCommandBuffers(VkCommandBuffer* commandBuffer, uint32_t commandBufferCount, VkCommandPool &commandPool);
+            // void createCommandPool(VkCommandPool* commandPool, VkCommandPoolCreateFlags flags);
+            void createRenderPass();
             VeWindow veWindow{WIDTH, HEIGHT, "First App"};
             VeDevice veDevice{veWindow};
             VeRenderer veRenderer{veWindow, veDevice};
-
+            VkRenderPass renderPass = VK_NULL_HANDLE;
+            VkDescriptorPool imGuiPool;
             std::unique_ptr<VeDescriptorPool> globalPool{};
             std::vector<std::unique_ptr<VeTexture>> textures;
             std::vector<std::unique_ptr<VeNormal>> normalMaps;

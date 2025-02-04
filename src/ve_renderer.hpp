@@ -32,6 +32,7 @@ namespace ve {
                 return currentFrameIndex; 
             }
             float getAspectRatio() const { return veSwapChain->extentAspectRatio(); }
+            VkFormat getSwapChainImageFormat() const { return veSwapChain->getSwapChainImageFormat(); }
         private:
             void createCommandBuffers();
             void freeCommandBuffers();

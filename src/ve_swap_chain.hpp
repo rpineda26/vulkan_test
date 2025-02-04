@@ -43,6 +43,7 @@ class VeSwapChain {
     return swapChainImageFormat == swapChain.swapChainImageFormat &&
            swapChainDepthFormat == swapChain.swapChainDepthFormat;
   }
+  VkFormat getSwapChainImageFormat() const { return swapChainImageFormat; }
 
  private:
   void init();
