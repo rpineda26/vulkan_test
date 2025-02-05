@@ -33,6 +33,8 @@ namespace ve {
             }
             float getAspectRatio() const { return veSwapChain->extentAspectRatio(); }
             VkFormat getSwapChainImageFormat() const { return veSwapChain->getSwapChainImageFormat(); }
+            VkFormat getSwapChainDepthFormat() const { return veSwapChain->findDepthFormat(); }
+
         private:
             void createCommandBuffers();
             void freeCommandBuffers();
