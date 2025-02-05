@@ -55,9 +55,12 @@ namespace ve{
             rotate.y += 1.0f;
         }
         //mouse contribution
+
         mouseOffset(window, deltaTime, gameObject);
-        rotate.y += mouseVariables.mouseDistanceX;
-        rotate.x -= mouseVariables.mouseDistanceY;
+        //temporarily disable mouse control
+        // rotate.y += mouseVariables.mouseDistanceX; 
+        // rotate.x -= mouseVariables.mouseDistanceY;
+
         //calculate rotation
         if(glm::dot(rotate, rotate) > std::numeric_limits<float>::epsilon()){
             gameObject.transform.rotation += glm::normalize(rotate) * lookSpeed * deltaTime;
