@@ -4,6 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <memory>
 #include <unordered_map>
+#include <cstring>
 namespace ve{
     struct TransformComponent{
         glm::vec3 translation{};
@@ -28,9 +29,16 @@ namespace ve{
             std::shared_ptr<VeModel> model{};
             glm::vec3  color{};
             TransformComponent transform{};
+            char* getTitle(){
+                return title;
+            }
+            void setTitle(const char* newTitle){
+                strncpy(title, newTitle, sizeof(title));
+            }
         private:
             VeGameObject(id_t objId): id{objId} {}
             id_t id;
+            char title[26]; 
     };
 
 }

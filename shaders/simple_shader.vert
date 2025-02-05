@@ -23,6 +23,9 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
 layout(push_constant) uniform Push {
     mat4 modelMatrix;
     mat4 normalMatrix;
+    uint textureIndex;
+    uint normalIndex;
+    float smoothness;
 } push;
 
 void main(){

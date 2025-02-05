@@ -4,7 +4,6 @@
 #include "buffer.hpp"
 #include "simple_render_system.hpp"
 #include "point_light_system.hpp"
-#include "editor_gui.cpp"
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -155,6 +154,21 @@ namespace ve {
 
         ImGui_ImplVulkan_Init(&init_info);
         bool showPropertiesWindow = true;
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
+    
+        // Set the window position to the right side
+        ImGui::SetNextWindowPos(
+            ImVec2(viewport->WorkSize.x - 200,  // X position (subtracting window width)
+                viewport->WorkPos.y),        // Y position at the top
+            ImGuiCond_Always
+        );
+        
+        // Set the window size (optional)
+        ImGui::SetNextWindowSize(
+            ImVec2(200,                         // Width
+                viewport->WorkSize.y),       // Height of the entire viewport
+            ImGuiCond_Always
+        );
         //main loop
         while (!veWindow.shouldClose()) {
             glfwPollEvents();
@@ -174,14 +188,13 @@ namespace ve {
             // camera.setOrtho(-aspect, aspect, -0.9f, 0.9f, -1.0f, 1.0f);
             camera.setPerspective(glm::radians(45.0f), aspect, 0.1f, 1500.0f);
             
-            
             //render frame
             if(auto commandBuffer = veRenderer.beginFrame()){
                 //start new imgui frame
                 ImGui_ImplVulkan_NewFrame();
                 ImGui_ImplGlfw_NewFrame();
                 ImGui::NewFrame();
-                ShowExampleAppPropertyEditor(&showPropertiesWindow);
+                sceneEditor.drawSceneEditor(gameObjects, lightPosition);
 
                 int frameIndex = veRenderer.getFrameIndex();
                 FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects};
@@ -217,29 +230,35 @@ namespace ve {
         //object 1: cube
         std::shared_ptr<VeModel> veModel = VeModel::createModelFromFile(veDevice, "models/smooth_vase.obj");
         veModel->setTextureIndex(1);
+        veModel->setNormalIndex(1);
         auto vase = VeGameObject::createGameObject();
         vase.model = veModel;
         vase.transform.translation = {0.5f, 0.5f, 0.0f};
         vase.transform.scale = {3.0f, 1.0f, 3.0f};
         vase.color = {128.0f, 228.1f, 229.1f}; //cyan
+        vase.setTitle("Vase");
         gameObjects.emplace(vase.getId(),std::move(vase));
         //vase
         veModel = VeModel::createModelFromFile(veDevice, "models/cube.obj");
         veModel->setTextureIndex(0);
+        veModel->setNormalIndex(0);
         auto cube = VeGameObject::createGameObject();
         cube.model = veModel;
         cube.transform.translation = {1.5f, 0.5f, 0.0f};
         cube.transform.scale = {0.45f, 0.45f, 0.45f};
         cube.color = {128.0f, 228.1f, 229.1f}; //cyan
+        cube.setTitle("Cube");
         gameObjects.emplace(cube.getId(),std::move(cube));
         //object 2: floor
         veModel = VeModel::createModelFromFile(veDevice, "models/quad.obj");
         veModel->setTextureIndex(3);
+        veModel->setNormalIndex(3);
         auto quad = VeGameObject::createGameObject();
         quad.model = veModel;
         quad.transform.translation = {0.0f, 0.5f, 0.0f};
         quad.transform.scale = {3.0f, 0.5f, 3.0f};
         quad.color = {103.0f,242.0f,209.0f};//light green
+        quad.setTitle("Floor");
         gameObjects.emplace(quad.getId(),std::move(quad));
     }
     void FirstApp::loadTextures(){

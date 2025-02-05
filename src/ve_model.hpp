@@ -43,6 +43,10 @@ namespace ve{
         void draw(VkCommandBuffer commandBuffer);
         uint32_t getTextureIndex() const {return textureIndex;}
         void setTextureIndex(uint32_t index) {textureIndex = index;}
+        uint32_t getNormalIndex() const {return normalIndex;}
+        void setNormalIndex(uint32_t index) {normalIndex = index;}
+        float getSmoothness() const {return smoothness;}
+        void setSmoothness(float value) {smoothness = value;}
 
     private:
         void createVertexBuffers(const std::vector<Vertex>& vertices);
@@ -57,6 +61,8 @@ namespace ve{
         std::unique_ptr<VeBuffer> indexBuffer;
         uint32_t indexCount;
         uint32_t textureIndex{0};
+        uint32_t normalIndex{0};
+        float smoothness{0.0f};
 
     };
 }

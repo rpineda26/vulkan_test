@@ -24,16 +24,20 @@ layout(push_constant) uniform Push {
     mat4 modelMatrix;
     mat4 normalMatrix;
     uint textureIndex;
+    uint normalIndex;
+    float smoothness;
 } push;
 
-float lightIntensity = 15.0f;
+float specularHiglightIntensity = 16.0f;
+float lightIntensity = 1.0f;
+
 void main() {
     //load albedo
     vec3 texColor = texture(textureSampler[push.textureIndex], fragUv).rgb;
     
     //load normal map
     // vec3 normalMap = normalize(fragNormal);
-    vec3 surfaceNormal = texture(normalSampler[push.textureIndex], fragUv).rgb;
+    vec3 surfaceNormal = texture(normalSampler[push.normalIndex], fragUv).rgb;
     surfaceNormal = normalize(surfaceNormal * 2.0 - 1.0);
 
     vec3 specularLight = vec3(0.0);
@@ -49,7 +53,7 @@ void main() {
     //diffused light
     vec3  lightColor = ubo.lightColor.xyz* ubo.lightColor.w *  attenuation;
     vec3 ambientLightColor = ubo.ambientLightColor.xyz  * ubo.ambientLightColor.w;
-    float cosAngIncidence = max(dot(surfaceNormal, directionToLight), 0) * lightIntensity;
+    float cosAngIncidence = max(dot(surfaceNormal, directionToLight), 0);
     vec3 diffuseLight = (lightColor * cosAngIncidence * texColor) + (ambientLightColor * texColor);
 
     //specular

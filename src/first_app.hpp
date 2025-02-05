@@ -6,6 +6,7 @@
 #include "ve_descriptors.hpp"
 #include "ve_texture.hpp"
 #include "ve_normal_map.hpp"
+#include "scene_editor_gui.hpp"
 #include <memory>
 #include <vector>
 #include <vulkan/vulkan.h>
@@ -36,7 +37,7 @@ namespace ve {
             std::vector<std::unique_ptr<VeNormal>> normalMaps;
             std::vector<VkDescriptorImageInfo> textureInfos;
             std::vector<VkDescriptorImageInfo> normalMapInfos;
-
+            SceneEditor sceneEditor{};
             VeGameObject::Map gameObjects;
     };
 }

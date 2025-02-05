@@ -12,6 +12,8 @@ namespace ve {
         glm::mat4 modelMatrix{1.0f};
         glm::mat4 normalMatrix{1.0f};
         uint32_t textureIndex{0};
+        uint32_t normalIndex{0};
+        float smoothness{0.0f};
     };
 
     SimpleRenderSystem::SimpleRenderSystem(
@@ -76,6 +78,8 @@ namespace ve {
             push.modelMatrix =  obj.transform.mat4();
             push.normalMatrix = obj.transform.normalMatrix();
             push.textureIndex = obj.model->getTextureIndex();
+            push.normalIndex = obj.model->getNormalIndex();
+            push.smoothness = obj.model->getSmoothness();
             vkCmdPushConstants(
                 frameInfo.commandBuffer,
                 pipelineLayout,

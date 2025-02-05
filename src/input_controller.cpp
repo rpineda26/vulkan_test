@@ -1,7 +1,12 @@
 #include "input_controller.hpp"
+#include <imgui.h>
 
 namespace ve{
     void InputController::inputLogic(GLFWwindow* window, float deltaTime, VeGameObject::Map& gameObjects, VeGameObject& camera, glm::vec3& lightPosition, SelectedObject& selectedObject){
+        ImGuiIO& io = ImGui::GetIO();
+        if(ImGui::IsAnyItemActive()){
+            return;
+        }
         if(glfwGetKey(window, keyMappings.selectCamera) == GLFW_PRESS){
             selectedObject = CAMERA;
         }
