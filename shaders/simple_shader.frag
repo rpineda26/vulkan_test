@@ -138,9 +138,9 @@ void main(){
     vec3 ambient = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w * albedo.rgb;
     vec3 finalColor = directLight + ambient;
     //tone mapping
-    finalColor = finalColor / (finalColor + vec3(1.0));
-    //gamma correction
-    finalColor = pow(finalColor, vec3(1.0/2.2));
+    // finalColor = finalColor / (finalColor + vec3(1.0));
+    // //gamma correction
+    // finalColor = pow(finalColor, vec3(1.0/2.2));
     outColor = vec4(finalColor, albedo.a);
 
 }
