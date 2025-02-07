@@ -30,10 +30,9 @@ layout(push_constant) uniform Push {
     float smoothness;
 } push;
 
-const float specularHiglightIntensity = 16.0f;
-const float lightIntensity = 1.0f;
 const float PI = 3.14159265359;
 const float minimumRoughness = 0.04;
+const float smoothness_input_weight = 0.75;
 
 //distribution function
 float Dist_GGX(float NdotH, float roughness) {
@@ -101,6 +100,7 @@ void main(){
     vec3 specularColor = specularSample.rgb;
 
     //convert smoothness to roughness
+    float smoothness = mix(specularSample.a, push.smoothness, smoothness_input_weight);
     float roughness = 1 - push.smoothness * specularSample.a;
     roughness = max(roughness, minimumRoughness);
 
