@@ -24,9 +24,7 @@ namespace ve {
         private:
             void loadGameObjects();
             void loadTextures();
-            // void createCommandBuffers(VkCommandBuffer* commandBuffer, uint32_t commandBufferCount, VkCommandPool &commandPool);
-            // void createCommandPool(VkCommandPool* commandPool, VkCommandPoolCreateFlags flags);
-            void createRenderPass();
+
             VeWindow veWindow{WIDTH, HEIGHT, "First App"};
             VeDevice veDevice{veWindow};
             VeRenderer veRenderer{veWindow, veDevice};
