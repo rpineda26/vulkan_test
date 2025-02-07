@@ -81,26 +81,25 @@ namespace ve{
                 ImGui::SameLine();
                 ImGui::InputText("##Name", object.getTitle(), sizeof(object.getTitle()));
                 // Position
-                if(ImGui::CollapsingHeader("Physical Attributes")){
-                    ImGui::Text("Position");
-                    ImGui::SameLine();
-                    ImGui::InputFloat3("##Position", &object.transform.translation.x);
-                // Rotation
-                    ImGui::Text("Rotation ");
-                    ImGui::SameLine();
-                    ImGui::InputFloat3("##Rotation", &object.transform.rotation.x);
-                // Scale
-                    ImGui::Text("Scale");
-                    ImGui::SameLine();
-                    ImGui::InputFloat3("##Scale", &object.transform.scale.x);
-                    // Color
-                    ImGui::Text("Color");
-                    ImGui::SameLine();
-                    ImGui::ColorEdit3("##Color", &object.color.x);
-                }
-                //Texture
                 if(object.lightComponent==nullptr){
-                    
+                    if(ImGui::CollapsingHeader("Physical Attributes")){
+                        ImGui::Text("Position");
+                        ImGui::SameLine();
+                        ImGui::InputFloat3("##Position", &object.transform.translation.x);
+                    // Rotation
+                        ImGui::Text("Rotation ");
+                        ImGui::SameLine();
+                        ImGui::InputFloat3("##Rotation", &object.transform.rotation.x);
+                    // Scale
+                        ImGui::Text("Scale");
+                        ImGui::SameLine();
+                        ImGui::InputFloat3("##Scale", &object.transform.scale.x);
+                        // Color
+                        ImGui::Text("Color");
+                        ImGui::SameLine();
+                        ImGui::ColorEdit3("##Color", &object.color.x);
+                    }
+                    //Texture
                     ImGui::Text("Texture Index");
                     ImGui::SameLine();
                     int textureIndex = object.model->getTextureIndex();
@@ -129,6 +128,9 @@ namespace ve{
                     );
                     object.model->setSmoothness(smoothness);
                 }else{
+                    ImGui::Text("Position");
+                    ImGui::SameLine();
+                    ImGui::InputFloat3("##Position", &object.transform.translation.x);
                     ImGui::Text("Light Intensity");
                     ImGui::SameLine();
                     float lightIntensity = object.lightComponent->lightIntensity;

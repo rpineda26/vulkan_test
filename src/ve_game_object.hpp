@@ -35,7 +35,7 @@ namespace ve{
             VeGameObject& operator=(VeGameObject&&) = default;
             
             //attributes
-            glm::vec3  color{};
+            glm::vec3  color{1.0f};
             TransformComponent transform{};
             //optional attributes
             std::shared_ptr<VeModel> model{};

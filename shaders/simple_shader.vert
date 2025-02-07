@@ -34,13 +34,14 @@ layout(push_constant) uniform Push {
     uint normalIndex;
     uint specularIndex;
     float smoothness;
+    vec3 baseColor;
 } push;
 
 void main(){
     vec4 positionWorld = push.modelMatrix * vec4(position, 1.0);
     gl_Position = ubo.projectionMatrix * (ubo.viewMatrix * positionWorld);
     fragPosition = positionWorld.xyz;
-    fragColor = color;
+    fragColor = color * push.baseColor;
     fragNormal = normalize(vec3(mat3(push.normalMatrix) * normal));
     fragUV = uv;
 

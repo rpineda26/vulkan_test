@@ -150,7 +150,7 @@ namespace ve {
         vase.model = veModel;
         vase.transform.translation = {0.5f, 0.5f, 0.0f};
         vase.transform.scale = {3.0f, 1.0f, 3.0f};
-        vase.color = {128.0f, 228.1f, 229.1f}; //cyan
+        // vase.color = {128.0f, 228.1f, 229.1f}; //cyan
         vase.setTitle("Vase");
         gameObjects.emplace(vase.getId(),std::move(vase));
         //vase
@@ -162,7 +162,7 @@ namespace ve {
         cube.model = veModel;
         cube.transform.translation = {1.5f, 0.5f, 0.0f};
         cube.transform.scale = {0.45f, 0.45f, 0.45f};
-        cube.color = {128.0f, 228.1f, 229.1f}; //cyan
+        // cube.color = {128.0f, 228.1f, 229.1f}; //cyan
         cube.setTitle("Cube");
         gameObjects.emplace(cube.getId(),std::move(cube));
         //object 2: floor
@@ -174,12 +174,13 @@ namespace ve {
         quad.model = veModel;
         quad.transform.translation = {0.0f, 0.5f, 0.0f};
         quad.transform.scale = {3.0f, 0.5f, 3.0f};
-        quad.color = {103.0f,242.0f,209.0f};//light green
+        // quad.color = {103.0f,242.0f,209.0f};//light green
         quad.setTitle("Floor");
         gameObjects.emplace(quad.getId(),std::move(quad));
 
         //object 3: light
         auto light = VeGameObject::createPointLight(1.0f, .2f, {1.0f,1.0f,1.0f});
+        light.setTitle("Light");
         light.transform.translation = {-0.811988f, -6.00838f, 0.1497f};
         gameObjects.emplace(light.getId(),std::move(light));
     }

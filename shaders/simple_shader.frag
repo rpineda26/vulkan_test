@@ -101,6 +101,7 @@ void Blinn_Phong() {
 void main(){
     //load texture maps
     vec4 albedo = texture(textureSampler[push.textureIndex], fragUv); // include alpha
+    albedo = albedo * vec4(fragColor, 1.0);
     vec3 surfaceNormal = texture(normalSampler[push.normalIndex], fragUv).rgb;
     vec4 specularSample = texture(specularSampler[push.specularIndex], fragUv);
     vec3 specularColor = specularSample.rgb;

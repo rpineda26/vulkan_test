@@ -15,6 +15,7 @@ namespace ve {
         uint32_t normalIndex{0};
         uint32_t specularIndex{0};
         float smoothness{0.0f};
+        glm::vec3 baseColor{1.0f};
     };
 
     SimpleRenderSystem::SimpleRenderSystem(
@@ -83,6 +84,7 @@ namespace ve {
                 push.normalIndex = obj.model->getNormalIndex();
                 push.specularIndex = obj.model->getSpecularIndex();
                 push.smoothness = obj.model->getSmoothness();
+                push.baseColor = obj.color;
                 
                 vkCmdPushConstants(
                     frameInfo.commandBuffer,
