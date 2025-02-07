@@ -25,6 +25,7 @@ layout(push_constant) uniform Push {
     mat4 normalMatrix;
     uint textureIndex;
     uint normalIndex;
+    uint specularIndex;
     float smoothness;
 } push;
 

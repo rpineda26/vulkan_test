@@ -80,6 +80,11 @@ namespace ve{
                 int normalIndex = object.model->getNormalIndex();
                 ImGui::InputInt("##NormalIndex", &normalIndex);
                 object.model->setNormalIndex(normalIndex%5);
+                int specularIndex = object.model->getSpecularIndex();
+                ImGui::Text("Specular Map Index");
+                ImGui::SameLine();
+                ImGui::InputInt("##SpecularIndex", &specularIndex);
+                object.model->setSpecularIndex(specularIndex%5);
                 ImGui::Text("Smoothness");
                 ImGui::SameLine();
                 float smoothness = object.model->getSmoothness();

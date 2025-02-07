@@ -41,11 +41,16 @@ namespace ve{
         static std::unique_ptr<VeModel> createModelFromFile(VeDevice& device, const std::string& filePath);
         void bind(VkCommandBuffer commandBuffer);
         void draw(VkCommandBuffer commandBuffer);
+        
+        //getters (data passed in push constants)
         uint32_t getTextureIndex() const {return textureIndex;}
-        void setTextureIndex(uint32_t index) {textureIndex = index;}
         uint32_t getNormalIndex() const {return normalIndex;}
-        void setNormalIndex(uint32_t index) {normalIndex = index;}
+        uint32_t getSpecularIndex() const {return specularIndex;}
         float getSmoothness() const {return smoothness;}
+        //setters
+        void setTextureIndex(uint32_t index) {textureIndex = index;}
+        void setNormalIndex(uint32_t index) {normalIndex = index;}
+        void setSpecularIndex(uint32_t index) {specularIndex = index;}
         void setSmoothness(float value) {smoothness = value;}
 
     private:
@@ -62,6 +67,7 @@ namespace ve{
         uint32_t indexCount;
         uint32_t textureIndex{0};
         uint32_t normalIndex{0};
+        uint32_t specularIndex{0};
         float smoothness{0.0f};
 
     };

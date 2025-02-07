@@ -33,8 +33,9 @@ namespace ve {
     };
     FirstApp::FirstApp() { 
         globalPool = VeDescriptorPool::Builder(veDevice)
-            .setMaxSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT * (1 +  10))  
+            .setMaxSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT * 15 + 2)  
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VeSwapChain::MAX_FRAMES_IN_FLIGHT)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5)
             .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5)
             .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5)
             #ifdef MACOS
@@ -94,6 +95,7 @@ namespace ve {
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 1)
             .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5)
             .addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5)
+            .addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5)
             .build();
 
         //create global descriptor pool
@@ -104,6 +106,7 @@ namespace ve {
                 .writeBuffer(0, &bufferInfo)
                 .writeImage(1, textureInfos.data(),5)
                 .writeImage(2, normalMapInfos.data(),5)
+                .writeImage(3, specularMapInfos.data(),5)
                 .build(globalDescriptorSets[i]);
         }
         //initialize render systems
@@ -231,6 +234,7 @@ namespace ve {
         std::shared_ptr<VeModel> veModel = VeModel::createModelFromFile(veDevice, "models/smooth_vase.obj");
         veModel->setTextureIndex(1);
         veModel->setNormalIndex(1);
+        veModel->setSpecularIndex(1);
         auto vase = VeGameObject::createGameObject();
         vase.model = veModel;
         vase.transform.translation = {0.5f, 0.5f, 0.0f};
@@ -242,6 +246,7 @@ namespace ve {
         veModel = VeModel::createModelFromFile(veDevice, "models/cube.obj");
         veModel->setTextureIndex(0);
         veModel->setNormalIndex(0);
+        veModel->setSpecularIndex(0);
         auto cube = VeGameObject::createGameObject();
         cube.model = veModel;
         cube.transform.translation = {1.5f, 0.5f, 0.0f};
@@ -253,6 +258,7 @@ namespace ve {
         veModel = VeModel::createModelFromFile(veDevice, "models/quad.obj");
         veModel->setTextureIndex(3);
         veModel->setNormalIndex(3);
+        veModel->setSpecularIndex(3);
         auto quad = VeGameObject::createGameObject();
         quad.model = veModel;
         quad.transform.translation = {0.0f, 0.5f, 0.0f};
@@ -267,12 +273,21 @@ namespace ve {
         textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/wood.png"));
         textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/wall_gray.png"));
         textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/tile.png"));
+        // textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/stone.png"));
         //normal maps
         normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/brick_normal.png"));
         normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/metal_normal.tga"));
         normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wood_normal.png"));
         normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wall_gray_normal.png"));
         normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/tile_normal.png"));
+        // normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/stone_normal.png"));
+        //specular maps
+        specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/brick_specular.png"));
+        specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/metal_specular.tga"));
+        specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wood_specular.png"));
+        specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wall_gray_specular.png"));
+        specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/tile_specular.png"));
+        // specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/stone_specular.png"));
         //get image infos
         for(int i = 0; i < textures.size(); i++){
             VkDescriptorImageInfo imageInfo{};
@@ -285,6 +300,11 @@ namespace ve {
             normalImageInfo.imageView = normalMaps[i]->getNormalImageView();
             normalImageInfo.sampler = normalMaps[i]->getNormalSampler();
             normalMapInfos.push_back(VkDescriptorImageInfo(normalImageInfo)); 
+            VkDescriptorImageInfo specularImageInfo{};
+            specularImageInfo.imageLayout = specularMaps[i]->getLayout();
+            specularImageInfo.imageView = specularMaps[i]->getNormalImageView();
+            specularImageInfo.sampler = specularMaps[i]->getNormalSampler();
+            specularMapInfos.push_back(VkDescriptorImageInfo(specularImageInfo));
         }
     }
     void FirstApp::createRenderPass() {

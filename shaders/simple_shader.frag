@@ -19,18 +19,21 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
 } ubo;
 layout(set = 0, binding = 1) uniform sampler2D textureSampler[5]; 
 layout(set = 0, binding = 2) uniform sampler2D normalSampler[5];
+layout(set = 0, binding = 3) uniform sampler2D specularSampler[5];
 
 layout(push_constant) uniform Push {
     mat4 modelMatrix;
     mat4 normalMatrix;
     uint textureIndex;
     uint normalIndex;
+    uint specularIndex;
     float smoothness;
 } push;
 
-float specularHiglightIntensity = 16.0f;
-float lightIntensity = 1.0f;
+const float specularHiglightIntensity = 16.0f;
+const float lightIntensity = 1.0f;
 const float PI = 3.14159265359;
+const float minimumRoughness = 0.04;
 
 //distribution function
 float Dist_GGX(float NdotH, float roughness) {
@@ -94,7 +97,13 @@ void main(){
     //load texture maps
     vec4 albedo = texture(textureSampler[push.textureIndex], fragUv); // include alpha
     vec3 surfaceNormal = texture(normalSampler[push.normalIndex], fragUv).rgb;
-    float roughness = 1 - push.smoothness;
+    vec4 specularSample = texture(specularSampler[push.specularIndex], fragUv);
+    vec3 specularColor = specularSample.rgb;
+
+    //convert smoothness to roughness
+    float roughness = 1 - push.smoothness * specularSample.a;
+    roughness = max(roughness, minimumRoughness);
+
 
     //define vectors
     vec3 N = normalize(surfaceNormal * 2.0 - 1.0); //convert from 0-1 to -1 to 1
@@ -117,7 +126,7 @@ void main(){
     //specular bdrf components
     float D = Dist_GGX(NdotH, roughness);
     float G = Geometric_Shading_Smith(NdotV, NdotL, roughness);
-    vec3 F0 = FresnelSchlick(VdotH, vec3(0.04)); //should come from an input value
+    vec3 F0 = FresnelSchlick(VdotH, specularColor); //should come from an input value
 
     vec3 specular = D * G * F0 / (4 * NdotV * NdotL);
 
@@ -128,7 +137,10 @@ void main(){
     //ambient light
     vec3 ambient = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w * albedo.rgb;
     vec3 finalColor = directLight + ambient;
-
+    //tone mapping
+    finalColor = finalColor / (finalColor + vec3(1.0));
+    //gamma correction
+    finalColor = pow(finalColor, vec3(1.0/2.2));
     outColor = vec4(finalColor, albedo.a);
 
 }

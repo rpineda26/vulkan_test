@@ -13,6 +13,7 @@ namespace ve {
         glm::mat4 normalMatrix{1.0f};
         uint32_t textureIndex{0};
         uint32_t normalIndex{0};
+        uint32_t specularIndex{0};
         float smoothness{0.0f};
     };
 
@@ -79,7 +80,9 @@ namespace ve {
             push.normalMatrix = obj.transform.normalMatrix();
             push.textureIndex = obj.model->getTextureIndex();
             push.normalIndex = obj.model->getNormalIndex();
+            push.specularIndex = obj.model->getSpecularIndex();
             push.smoothness = obj.model->getSmoothness();
+            
             vkCmdPushConstants(
                 frameInfo.commandBuffer,
                 pipelineLayout,
