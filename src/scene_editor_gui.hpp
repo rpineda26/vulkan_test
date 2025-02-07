@@ -9,9 +9,9 @@ namespace ve {
     class SceneEditor {
         public:
             SceneEditor();
-            void drawSceneEditor(VeGameObject::Map& gameObjects, glm::vec3& lightPosition);
-            void drawObjectsColumn(VeGameObject::Map& gameObjects, glm::vec3& lightPosition);
-            void drawProperties(VeGameObject::Map& gameObjects, glm::vec3& lightPosition);
+            void drawSceneEditor(VeGameObject::Map& gameObjects, int& selectedObject, VeGameObject& camera);
+            void drawObjectsColumn(VeGameObject::Map& gameObjects,int& selectedObject, bool isLight);
+            void drawProperties(VeGameObject::Map& gameObjects, VeGameObject& camera);
         private:
             
             int selectedGameObject = -1;

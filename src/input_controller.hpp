@@ -37,12 +37,10 @@ namespace ve{
             double lastMouseX, lastMouseY, mouseX, mouseY, mouseDistanceX, mouseDistanceY = 0.0;
             bool firstMouse = true;
         };
-            void inputLogic(GLFWwindow* window, float deltaTime, VeGameObject::Map& gameObjects, VeGameObject& camera, glm::vec3& lightPosition, SelectedObject& selectedObject);
+            void inputLogic(GLFWwindow* window, float deltaTime, VeGameObject::Map& gameObjects, VeGameObject& camera, int selectedObject);
             void moveInPlane(GLFWwindow* window, float deltaTime, VeGameObject& gameObject);
             //for testing lighting
-            void movePosition(GLFWwindow* window, float deltaTime, glm::vec3& lightPosition);
             void mouseOffset(GLFWwindow* window, float deltaTime, VeGameObject& gameObject);
-            void changeTexture(GLFWwindow* window, VeGameObject::Map& gameObjects);
             KeyMappings keyMappings{};
             MouseVariables mouseVariables{};
             float moveSpeed{2.0f};

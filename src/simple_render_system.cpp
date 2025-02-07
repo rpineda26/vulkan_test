@@ -75,24 +75,26 @@ namespace ve {
         );
         for(auto& key_value : frameInfo.gameObjects){
             auto& obj = key_value.second;
-            SimplePushConstantData push{};
-            push.modelMatrix =  obj.transform.mat4();
-            push.normalMatrix = obj.transform.normalMatrix();
-            push.textureIndex = obj.model->getTextureIndex();
-            push.normalIndex = obj.model->getNormalIndex();
-            push.specularIndex = obj.model->getSpecularIndex();
-            push.smoothness = obj.model->getSmoothness();
-            
-            vkCmdPushConstants(
-                frameInfo.commandBuffer,
-                pipelineLayout,
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                0,
-                sizeof(SimplePushConstantData),
-                &push
-            );
-            obj.model->bind(frameInfo.commandBuffer);
-            obj.model->draw(frameInfo.commandBuffer);
+            if(obj.lightComponent == nullptr){
+                SimplePushConstantData push{};
+                push.modelMatrix =  obj.transform.mat4();
+                push.normalMatrix = obj.transform.normalMatrix();
+                push.textureIndex = obj.model->getTextureIndex();
+                push.normalIndex = obj.model->getNormalIndex();
+                push.specularIndex = obj.model->getSpecularIndex();
+                push.smoothness = obj.model->getSmoothness();
+                
+                vkCmdPushConstants(
+                    frameInfo.commandBuffer,
+                    pipelineLayout,
+                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                    0,
+                    sizeof(SimplePushConstantData),
+                    &push
+                );
+                obj.model->bind(frameInfo.commandBuffer);
+                obj.model->draw(frameInfo.commandBuffer);
+            }
         }
     }
 }

@@ -5,17 +5,22 @@ layout(location = 2) in vec3 fragNormal;
 layout(location = 3) in vec2 fragUv;
 layout(location = 4) in vec3 fragTangentPos;
 layout(location = 5) in vec3 fragTangentView;
-layout(location = 6) in vec3 fragTangentLight;
+layout(location = 6) in vec3 fragTangentLightPos[10];
 layout(location = 0) out vec4 outColor;
+
+struct PointLight{
+    vec4 position;
+    vec4 color;
+    float radius; //only used in the shader for rendering the point light
+};
 //camera view plus lighting
 layout(set = 0, binding = 0) uniform UniformBufferObject {
     mat4 projectionMatrix;
     mat4 viewMatrix;
     mat4 invViewMatrix;
     vec4 ambientLightColor;
-    vec3 lightPosition;
-    vec4 lightColor;
-
+    PointLight lights[10];
+    int lightCount;
 } ubo;
 layout(set = 0, binding = 1) uniform sampler2D textureSampler[5]; 
 layout(set = 0, binding = 2) uniform sampler2D normalSampler[5];
@@ -56,6 +61,8 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0) {
 }
 
 //previous model implemented: blinn phong
+//this model is not updated to consider multiple point lights
+
 void Blinn_Phong() {
     //load albedo
     vec3 texColor = texture(textureSampler[push.textureIndex], fragUv).rgb;
@@ -66,16 +73,15 @@ void Blinn_Phong() {
 
     vec3 specularLight = vec3(0.0);
     vec3 cameraPosWorld = ubo.invViewMatrix[3].xyz;
-    // vec3 viewDir = normalize(cameraPosWorld - fragPosition);
     vec3 viewDir = normalize(fragTangentView - fragTangentPos);
 
-    // vec3 directionToLight = ubo.lightPosition.xyz - fragPosition;
-    vec3 directionToLight = fragTangentLight - fragTangentPos;
+    vec3 directionToLight = fragTangentLightPos[0] - fragTangentPos;
     float attenuation = 1.0 / dot(directionToLight, directionToLight);
     directionToLight = normalize(directionToLight);
 
     //diffused light
-    vec3  lightColor = ubo.lightColor.xyz* ubo.lightColor.w *  attenuation;
+    // vec3  lightColor = ubo.lightColor.xyz* ubo.lightColor.w *  attenuation;
+    vec3 lightColor = ubo.lights[0].color.xyz * ubo.lights[0].color.w * attenuation; //temporary fix
     vec3 ambientLightColor = ubo.ambientLightColor.xyz  * ubo.ambientLightColor.w;
     float cosAngIncidence = max(dot(surfaceNormal, directionToLight), 0);
     vec3 diffuseLight = (lightColor * cosAngIncidence * texColor) + (ambientLightColor * texColor);
@@ -105,38 +111,44 @@ void main(){
     roughness = max(roughness, minimumRoughness);
 
 
-    //define vectors
+    //calculate values that does not factor in light vector
     vec3 N = normalize(surfaceNormal * 2.0 - 1.0); //convert from 0-1 to -1 to 1
     vec3 V = normalize(fragTangentView - fragTangentPos);
-    vec3 L = normalize(fragTangentLight - fragTangentPos);
-    vec3 H = normalize(L + V);
-
-    //dot products
     float NdotV = max(dot(N, V), 0.0);
-    float NdotL = max(dot(N, L), 0.0);
-    float NdotH = max(dot(N, H), 0.0);
-    float VdotH = max(dot(V, H), 0.0);
 
-    //light attenuation
-    vec3 directionToLight = fragTangentLight - fragTangentPos;
-    float attenuation = 1.0 / dot(directionToLight, directionToLight);
-    vec3 radiance = ubo.lightColor.xyz * ubo.lightColor.w * attenuation;
-    directionToLight = normalize(directionToLight);
+    //calculate lighting
+    vec3 totalLight = vec3(0.0);
+    for(int i = 0; i < ubo.lightCount; i++) {
+        //define vectors
+        
+        vec3 L = normalize(fragTangentLightPos[i] - fragTangentPos);
+        vec3 H = normalize(L + V);
+        //dot products
+        
+        float NdotL = max(dot(N, L), 0.0);
+        float NdotH = max(dot(N, H), 0.0);
+        float VdotH = max(dot(V, H), 0.0);
 
-    //specular bdrf components
-    float D = Dist_GGX(NdotH, roughness);
-    float G = Geometric_Shading_Smith(NdotV, NdotL, roughness);
-    vec3 F0 = FresnelSchlick(VdotH, specularColor); //should come from an input value
+        //light attenuation
+        vec3 directionToLight = fragTangentLightPos[i] - fragTangentPos;
+        float attenuation = 1.0 / dot(directionToLight, directionToLight);
+        vec3 radiance = ubo.lights[i].color.xyz * ubo.lights[i].color.w * attenuation;
+        directionToLight = normalize(directionToLight);
 
-    vec3 specular = D * G * F0 / (4 * NdotV * NdotL);
+        //specular bdrf components
+        float D = Dist_GGX(NdotH, roughness);
+        float G = Geometric_Shading_Smith(NdotV, NdotL, roughness);
+        vec3 F0 = FresnelSchlick(VdotH, specularColor); //should come from an input value
 
-    //diffuse component
-    vec3 diffuse = albedo.rgb / PI;
-    vec3 directLight = (diffuse + specular) * radiance * NdotL;
+        vec3 specular = D * G * F0 / (4 * NdotV * NdotL);
 
+        //diffuse component
+        vec3 diffuse = albedo.rgb / PI;
+        totalLight += (diffuse + specular) * radiance * NdotL;
+    }
     //ambient light
     vec3 ambient = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w * albedo.rgb;
-    vec3 finalColor = directLight + ambient;
+    vec3 finalColor = totalLight + ambient;
     //tone mapping
     // finalColor = finalColor / (finalColor + vec3(1.0));
     // //gamma correction

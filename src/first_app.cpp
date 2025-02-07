@@ -18,33 +18,25 @@
 #include <chrono>
 #include <iostream>
 namespace ve {
-    struct GlobalUbo {
-        glm::mat4 projection{1.0f};
-        glm::mat4 view{1.0f};
-        glm::mat4 inverseView{1.0f};
-        glm::vec4 ambientLightColor{1.0f,1.0f,1.0f,0.1f};
-        glm::vec3 lightPosition{0.0f};
-        //lightPosition{-1.18f,-6.145f,-1.0255f};
-        alignas(16)glm::vec4 lightColor{1.0f}; //white
-        // lightColor{1.0f, 0.9f, 0.5f, 1.0f}; yellowish
-        //lightColor{213.0f,185.0f,255.0f,1.0f}; purple
-    };
     FirstApp::FirstApp() { 
+        //setup descriptor pools
         globalPool = VeDescriptorPool::Builder(veDevice)
             .setMaxSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT * 15 + 2)  
-            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VeSwapChain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VeSwapChain::MAX_FRAMES_IN_FLIGHT) //CAMERA INFO
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5) //ALBEDO ARRAY
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5) //NORMAL MAP ARRAY
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5) //SPECULAR MAP ARRAY
             #ifdef MACOS
             .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
             #endif
             .build();
+        //Dear ImGui DescriptorPool
+        imGuiPool = VeImGui::createDescriptorPool(veDevice.device());
+        //load assets
         loadGameObjects(); 
         loadTextures();
-
-        imGuiPool = VeImGui::createDescriptorPool(veDevice.device());
     }
+    //cleanup
     FirstApp::~FirstApp() {
         vkDestroyRenderPass(veDevice.device(), renderPass, nullptr);
         vkDestroyDescriptorPool(veDevice.device(), imGuiPool, nullptr);
@@ -93,11 +85,9 @@ namespace ve {
         viewerObject.transform.rotation = {-1.33747,1.56693f,0.0f};
         //camera controller
         InputController inputController{};
-        glm::vec3 lightPosition{-0.811988f, -6.00838f, 0.1497f};
         //game time
         auto currentTime = std::chrono::high_resolution_clock::now();
         //initialize selected object to control
-        SelectedObject selectedObject = CAMERA;
 
         //initialize imgui
         renderPass = VeImGui::createRenderPass(veDevice.device(), veRenderer.getSwapChainImageFormat(), veRenderer.getSwapChainDepthFormat());
@@ -113,10 +103,9 @@ namespace ve {
             frameTime = glm::min(frameTime, 0.1f); //clamp large frametimes
 
             //update objects based on input
-            inputController.inputLogic(veWindow.getGLFWWindow(), frameTime, gameObjects, viewerObject, lightPosition, selectedObject);
+            inputController.inputLogic(veWindow.getGLFWWindow(), frameTime, gameObjects, viewerObject, selectedObject);
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
  
-
             //setup viewing projection
             float aspect = veRenderer.getAspectRatio();
             // camera.setOrtho(-aspect, aspect, -0.9f, 0.9f, -1.0f, 1.0f);
@@ -126,7 +115,7 @@ namespace ve {
             if(auto commandBuffer = veRenderer.beginFrame()){
                 //start new imgui frame
                 VeImGui::initializeImGuiFrame();;
-                sceneEditor.drawSceneEditor(gameObjects, lightPosition);
+                sceneEditor.drawSceneEditor(gameObjects, selectedObject, viewerObject);
 
                 int frameIndex = veRenderer.getFrameIndex();
                 FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects};
@@ -135,7 +124,7 @@ namespace ve {
                 globalUbo.projection = camera.getProjectionMatrix();
                 globalUbo.view = camera.getViewMatrix();
                 globalUbo.inverseView = camera.getInverseMatrix();
-                globalUbo.lightPosition = lightPosition;
+                pointLightSystem.update(frameInfo, globalUbo);
                 uniformBuffers[frameIndex]->writeToBuffer(&globalUbo);
                 uniformBuffers[frameIndex]->flush();
                 //render
@@ -188,6 +177,11 @@ namespace ve {
         quad.color = {103.0f,242.0f,209.0f};//light green
         quad.setTitle("Floor");
         gameObjects.emplace(quad.getId(),std::move(quad));
+
+        //object 3: light
+        auto light = VeGameObject::createPointLight(1.0f, .2f, {1.0f,1.0f,1.0f});
+        light.transform.translation = {-0.811988f, -6.00838f, 0.1497f};
+        gameObjects.emplace(light.getId(),std::move(light));
     }
     void FirstApp::loadTextures(){
         textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/brick_texture.png"));

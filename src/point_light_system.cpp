@@ -53,7 +53,21 @@ namespace ve {
             pipelineConfig);
     }
     
-    
+    void PointLightSystem::update(FrameInfo& frameInfo, GlobalUbo& ubo) {
+        int lightIndex = 0;
+        for(auto& key_value : frameInfo.gameObjects){
+            auto& object = key_value.second;
+            //working with point lights
+            if(object.lightComponent!=nullptr) {
+                ubo.pointLights[lightIndex].position = glm::vec4(object.transform.translation,1.0f); //vec3 position is aligned as vec4
+                ubo.pointLights[lightIndex].color = glm::vec4(object.color, object.lightComponent->lightIntensity);
+                ubo.pointLights[lightIndex].radius = object.transform.scale.x;
+                lightIndex++;
+            }
+        }
+        ubo.numLights = lightIndex;
+
+    }
     void PointLightSystem::render(FrameInfo& frameInfo) {
         vePipeline->bind(frameInfo.commandBuffer);
         vkCmdBindDescriptorSets(

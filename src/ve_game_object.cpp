@@ -56,4 +56,12 @@ namespace ve{
             },
         };
     }
+    VeGameObject VeGameObject::createPointLight(float intensity, float radius, glm::vec3 color){
+        VeGameObject pointLight = VeGameObject::createGameObject();
+        pointLight.lightComponent = std::make_unique<PointLightComponent>();
+        pointLight.lightComponent->lightIntensity = intensity;
+        pointLight.transform.scale.x = radius;
+        pointLight.color = color;
+        return pointLight;
+    }
 }

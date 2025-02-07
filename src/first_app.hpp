@@ -39,5 +39,6 @@ namespace ve {
             std::vector<VkDescriptorImageInfo> specularMapInfos;
             SceneEditor sceneEditor{};
             VeGameObject::Map gameObjects;
+            int selectedObject = -1;
     };
 }
