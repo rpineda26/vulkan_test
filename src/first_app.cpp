@@ -27,7 +27,7 @@ namespace ve {
         glm::vec4 ambientLightColor{1.0f,1.0f,1.0f,0.1f};
         glm::vec3 lightPosition{0.0f};
         //lightPosition{-1.18f,-6.145f,-1.0255f};
-        alignas(16)glm::vec4 lightColor{1.0f, 0.9f, 0.5f, 1.0f}; //white
+        alignas(16)glm::vec4 lightColor{1.0f}; //white
         // lightColor{1.0f, 0.9f, 0.5f, 1.0f}; yellowish
         //lightColor{213.0f,185.0f,255.0f,1.0f}; purple
     };
@@ -287,24 +287,6 @@ namespace ve {
             normalMapInfos.push_back(VkDescriptorImageInfo(normalImageInfo)); 
         }
     }
-    // void FirstApp::createCommandPool(VkCommandPool* commandPool, VkCommandPoolCreateFlags flags) {
-    //     VkCommandPoolCreateInfo commandPoolCreateInfo = {};
-    //     commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    //     commandPoolCreateInfo.queueFamilyIndex = graphicsFamilyIndex;
-    //     commandPoolCreateInfo.flags = flags;
-
-    //     if (vkCreateCommandPool(veDevice.device(), &commandPoolCreateInfo, nullptr, commandPool) != VK_SUCCESS) {
-    //         throw std::runtime_error("Could not create graphics command pool");
-    //     }
-    // }
-    // void FirstApp::createCommandBuffers(VkCommandBuffer* commandBuffer, uint32_t commandBufferCount, VkCommandPool &commandPool) {
-    //     VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
-    //     commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    //     commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    //     commandBufferAllocateInfo.commandPool = commandPool;
-    //     commandBufferAllocateInfo.commandBufferCount = commandBufferCount;
-    //     vkAllocateCommandBuffers(veDevice.device(), &commandBufferAllocateInfo, commandBuffer);
-    // }
     void FirstApp::createRenderPass() {
         vkDestroyRenderPass(veDevice.device(), renderPass, nullptr);
 

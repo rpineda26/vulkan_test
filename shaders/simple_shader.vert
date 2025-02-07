@@ -35,14 +35,16 @@ void main(){
     fragColor = color;
     fragNormal = normalize(vec3(mat3(push.normalMatrix) * normal));
     fragUV = uv;
-    vec3 T = normalize(mat3(push.normalMatrix) * tangent);
-    vec3 N = fragNormal; //for readability
+
+    mat3 normalMatrix = transpose(inverse(mat3(push.modelMatrix)));
+    vec3 T = normalize(normalMatrix * tangent);
+    vec3 N = normalize(normalMatrix * normal); //for readability
     T = normalize(T - dot(T, N) * N);
     vec3 B = cross(N, T);
-
+    
     mat3 TBN = transpose(mat3(T, B, N));
     vec3 cameraPosWorld = vec3(ubo.invViewMatrix * vec4(0.0, 0.0, 0.0, 1.0));
-    fragTangentPos = TBN * positionWorld.xyz;
+    fragTangentPos = TBN * fragPosition;
     fragTangentView = TBN * cameraPosWorld;
     fragTangentLight = TBN * ubo.lightPosition;
 
