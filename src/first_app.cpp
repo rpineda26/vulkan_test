@@ -5,6 +5,7 @@
 #include "simple_render_system.hpp"
 #include "point_light_system.hpp"
 #include "ve_imgui.hpp"
+#include "utility.hpp"
 
 
 #define GLM_FORCE_RADIANS
@@ -33,6 +34,7 @@ namespace ve {
         //Dear ImGui DescriptorPool
         imGuiPool = VeImGui::createDescriptorPool(veDevice.device());
         //load assets
+        preLoadModels(veDevice);
         loadGameObjects(); 
         loadTextures();
     }
@@ -40,6 +42,7 @@ namespace ve {
     FirstApp::~FirstApp() {
         vkDestroyRenderPass(veDevice.device(), renderPass, nullptr);
         vkDestroyDescriptorPool(veDevice.device(), imGuiPool, nullptr);
+        cleanupPreloadedModels();
     }
 
     void FirstApp::run() {
@@ -92,7 +95,7 @@ namespace ve {
         //initialize imgui
         renderPass = VeImGui::createRenderPass(veDevice.device(), veRenderer.getSwapChainImageFormat(), veRenderer.getSwapChainDepthFormat());
         VeImGui::createImGuiContext(veDevice, veWindow, imGuiPool, renderPass, VeSwapChain::MAX_FRAMES_IN_FLIGHT);
-    
+        int numLights = getNumLights();
         //main loop
         while (!veWindow.shouldClose()) {
             glfwPollEvents();
@@ -114,8 +117,9 @@ namespace ve {
             //render frame
             if(auto commandBuffer = veRenderer.beginFrame()){
                 //start new imgui frame
-                VeImGui::initializeImGuiFrame();;
-                sceneEditor.drawSceneEditor(gameObjects, selectedObject, viewerObject);
+                VeImGui::initializeImGuiFrame();
+                numLights = getNumLights();
+                sceneEditor.drawSceneEditor(gameObjects, selectedObject, viewerObject, numLights);
 
                 int frameIndex = veRenderer.getFrameIndex();
                 FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects};
@@ -130,7 +134,7 @@ namespace ve {
                 //render
                 veRenderer.beginSwapChainRenderPass(commandBuffer);
                 simpleRenderSystem.renderGameObjects(frameInfo);
-                pointLightSystem.render(frameInfo);
+                pointLightSystem.render(frameInfo, globalUbo.numLights);
                 VeImGui::renderImGuiFrame(commandBuffer);
                 veRenderer.endSwapChainRenderPass(commandBuffer);
                 veRenderer.endFrame();
@@ -142,36 +146,33 @@ namespace ve {
     
     void FirstApp::loadGameObjects() {
         //object 1: cube
-        std::shared_ptr<VeModel> veModel = VeModel::createModelFromFile(veDevice, "models/smooth_vase.obj");
-        veModel->setTextureIndex(1);
-        veModel->setNormalIndex(1);
-        veModel->setSpecularIndex(1);
         auto vase = VeGameObject::createGameObject();
-        vase.model = veModel;
+        vase.setTextureIndex(0);
+        vase.setNormalIndex(0);
+        vase.setSpecularIndex(0);
+        vase.model = preLoadedModels["smooth_vase"];
         vase.transform.translation = {0.5f, 0.5f, 0.0f};
         vase.transform.scale = {3.0f, 1.0f, 3.0f};
         // vase.color = {128.0f, 228.1f, 229.1f}; //cyan
         vase.setTitle("Vase");
         gameObjects.emplace(vase.getId(),std::move(vase));
         //vase
-        veModel = VeModel::createModelFromFile(veDevice, "models/cube.obj");
-        veModel->setTextureIndex(0);
-        veModel->setNormalIndex(0);
-        veModel->setSpecularIndex(0);
         auto cube = VeGameObject::createGameObject();
-        cube.model = veModel;
+        cube.setTextureIndex(1);
+        cube.setNormalIndex(1);
+        cube.setSpecularIndex(1);
+        cube.model = preLoadedModels["cube"];
         cube.transform.translation = {1.5f, 0.5f, 0.0f};
         cube.transform.scale = {0.45f, 0.45f, 0.45f};
         // cube.color = {128.0f, 228.1f, 229.1f}; //cyan
         cube.setTitle("Cube");
         gameObjects.emplace(cube.getId(),std::move(cube));
         //object 2: floor
-        veModel = VeModel::createModelFromFile(veDevice, "models/quad.obj");
-        veModel->setTextureIndex(3);
-        veModel->setNormalIndex(3);
-        veModel->setSpecularIndex(3);
         auto quad = VeGameObject::createGameObject();
-        quad.model = veModel;
+        quad.setTextureIndex(2);
+        quad.setNormalIndex(2);
+        quad.setSpecularIndex(2);
+        quad.model = preLoadedModels["quad"];
         quad.transform.translation = {0.0f, 0.5f, 0.0f};
         quad.transform.scale = {3.0f, 0.5f, 3.0f};
         // quad.color = {103.0f,242.0f,209.0f};//light green
@@ -223,6 +224,15 @@ namespace ve {
             specularImageInfo.sampler = specularMaps[i]->getNormalSampler();
             specularMapInfos.push_back(VkDescriptorImageInfo(specularImageInfo));
         }
+    }
+    int FirstApp::getNumLights(){
+        int numLights = 0;
+        for(auto& [key, object] : gameObjects){
+            if(object.lightComponent!=nullptr){
+                numLights++;
+            }
+        }
+        return numLights;
     }
 
 }

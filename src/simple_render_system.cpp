@@ -80,10 +80,10 @@ namespace ve {
                 SimplePushConstantData push{};
                 push.modelMatrix =  obj.transform.mat4();
                 push.normalMatrix = obj.transform.normalMatrix();
-                push.textureIndex = obj.model->getTextureIndex();
-                push.normalIndex = obj.model->getNormalIndex();
-                push.specularIndex = obj.model->getSpecularIndex();
-                push.smoothness = obj.model->getSmoothness();
+                push.textureIndex = obj.getTextureIndex();
+                push.normalIndex = obj.getNormalIndex();
+                push.specularIndex = obj.getSpecularIndex();
+                push.smoothness = obj.getSmoothness();
                 push.baseColor = obj.color;
                 
                 vkCmdPushConstants(

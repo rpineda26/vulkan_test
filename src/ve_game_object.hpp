@@ -40,6 +40,7 @@ namespace ve{
             //optional attributes
             std::shared_ptr<VeModel> model{};
             std::unique_ptr<PointLightComponent> lightComponent = nullptr;
+
             //getters and setters
             id_t getId() { return id; }
             char* getTitle(){
@@ -48,12 +49,40 @@ namespace ve{
             void setTitle(const char* newTitle){
                 strncpy(title, newTitle, sizeof(title));
             }
+            void setTextureIndex(uint32_t index){
+                textureIndex = index;
+            }
+            void setNormalIndex(uint32_t index){
+                normalIndex = index;
+            }
+            void setSpecularIndex(uint32_t index){
+                specularIndex = index;
+            }
+            uint32_t getTextureIndex(){
+                return textureIndex;
+            }
+            uint32_t getNormalIndex(){
+                return normalIndex;
+            }
+            uint32_t getSpecularIndex(){
+                return specularIndex;
+            }
+            void setSmoothness(float value){
+                smoothness = value;
+            }
+            float getSmoothness(){
+                return smoothness;
+            }
         private:
             //instantiation of VeGameobject is only allowed through createGameObject to 
             //make sure id is unique (incrementing)
             VeGameObject(id_t objId): id{objId} {}
             id_t id;
             char title[26]; 
+            uint32_t textureIndex = 0;
+            uint32_t normalIndex = 0;
+            uint32_t specularIndex = 0;
+            float smoothness = 0.0f;
     };
 
 }

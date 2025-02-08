@@ -8,6 +8,7 @@
 #include "ve_normal_map.hpp"
 #include "scene_editor_gui.hpp"
 #include <memory>
+#include <unordered_map>
 #include <vector>
 #include <vulkan/vulkan.h>
 namespace ve {
@@ -24,7 +25,7 @@ namespace ve {
         private:
             void loadGameObjects();
             void loadTextures();
-
+            int getNumLights();
             VeWindow veWindow{WIDTH, HEIGHT, "First App"};
             VeDevice veDevice{veWindow};
             VeRenderer veRenderer{veWindow, veDevice};

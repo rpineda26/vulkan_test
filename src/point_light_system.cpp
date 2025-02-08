@@ -68,7 +68,7 @@ namespace ve {
         ubo.numLights = lightIndex;
 
     }
-    void PointLightSystem::render(FrameInfo& frameInfo) {
+    void PointLightSystem::render(FrameInfo& frameInfo, int numLights) {
         vePipeline->bind(frameInfo.commandBuffer);
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,
@@ -80,6 +80,6 @@ namespace ve {
             0,
             nullptr
         );
-        vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
+        vkCmdDraw(frameInfo.commandBuffer, 6, numLights, 0, 0);
     }
 }

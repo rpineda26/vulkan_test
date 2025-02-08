@@ -9,11 +9,14 @@ namespace ve {
     class SceneEditor {
         public:
             SceneEditor();
-            void drawSceneEditor(VeGameObject::Map& gameObjects, int& selectedObject, VeGameObject& camera);
+            void drawSceneEditor(VeGameObject::Map& gameObjects, int& selectedObject, VeGameObject& camera, int& numLights);
             void drawObjectsColumn(VeGameObject::Map& gameObjects,int& selectedObject, bool isLight);
             void drawProperties(VeGameObject::Map& gameObjects, VeGameObject& camera);
+            void addObject(VeGameObject::Map& gameObjects, int& numLights, int& selectedObject);
+            void selectModel(VeGameObject::Map& gameObjects, VeGameObject& object);
         private:
             
             int selectedGameObject = -1;
+            bool showObjectOptions = false;
     };
 }
