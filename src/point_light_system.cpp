@@ -62,13 +62,16 @@ namespace ve {
                 ubo.pointLights[lightIndex].position = glm::vec4(object.transform.translation,1.0f); //vec3 position is aligned as vec4
                 ubo.pointLights[lightIndex].color = glm::vec4(object.color, object.lightComponent->lightIntensity);
                 ubo.pointLights[lightIndex].radius = object.transform.scale.x;
-                ubo.pointLights[lightIndex].objId = key_value.first;
-                lightIndex++;
-                if(ubo.pointLights[lightIndex].objId == frameInfo.selectedObject){
-                    float pulse = 1.0f + 0.5f * glm::sin(frameInfo.elapsedTime * 5.0f); // Oscillates between 0.5 and 1.5
-                    ubo.pointLights[lightIndex].color *= pulse;
-                    ubo.pointLights[lightIndex].radius *= pulse;
+                ubo.pointLights[lightIndex].objId = object.getId();
+                
+                //pulsate
+                if(ubo.pointLights[lightIndex].objId == frameInfo.selectedObject && frameInfo.showOutlignHighlight){
+                    float pulseRadius = 1.0f + 0.2f * glm::sin(frameInfo.elapsedTime * 5.0f); 
+                    float pulseColor = 0.5f + 1.0f * glm::sin(frameInfo.elapsedTime * 5.0f); 
+                    ubo.pointLights[lightIndex].color *= pulseColor;
+                    ubo.pointLights[lightIndex].radius *= pulseRadius;
                 }
+                lightIndex++;
             }
         }
         ubo.numLights = lightIndex;

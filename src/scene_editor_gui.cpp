@@ -12,9 +12,14 @@ namespace ve{
     void SceneEditor::drawSceneEditor(VeGameObject::Map& gameObjects, int& selectedObject, VeGameObject& camera, int& numLights, bool& isOutlignHighlight){
         ImGui::Begin("Scene Editor");
         addObject(gameObjects, numLights, selectedObject);
-        if(ImGui::Checkbox("Highlight Outline", &isOutlignHighlight)){
+        
+        if(ImGui::Checkbox("Emphasize Selected Object", &isOutlignHighlight)){
             // isOutlignHighlight = !isOutlignHighlight; checkBox already updates the value
 
+        }
+        // Tooltip when hovered on the checkbox
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Enable or disable the pulsing or outline highlight effect for selected object.");
         }
         ImGui::Columns( 2);
         // Game Objects Section
