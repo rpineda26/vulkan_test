@@ -7,6 +7,7 @@
 #include <array>
 #include <stdexcept>
 #include <cassert>
+#include <map>
 namespace ve {
     PointLightSystem::PointLightSystem(
         VeDevice& device, VkRenderPass renderPass, 
@@ -42,6 +43,7 @@ namespace ve {
         assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
         PipelineConfigInfo pipelineConfig{};
         VePipeline::defaultPipelineConfigInfo(pipelineConfig);
+        VePipeline::enableAlphaBlending(pipelineConfig); 
         pipelineConfig.vertexAttributeDescriptions.clear();
         pipelineConfig.vertexBindingDescriptions.clear();
         pipelineConfig.renderPass = renderPass;
@@ -77,6 +79,7 @@ namespace ve {
         ubo.numLights = lightIndex;
     }
     void PointLightSystem::render(FrameInfo& frameInfo) {
+
         vePipeline->bind(frameInfo.commandBuffer);
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,

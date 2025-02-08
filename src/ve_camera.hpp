@@ -18,6 +18,7 @@ namespace ve{
             const glm::mat4& getProjectionMatrix() const { return projectionMatrix; }
             const glm::mat4& getViewMatrix() const { return viewMatrix; }
             const glm::mat4& getInverseMatrix() const { return inverseMatrix; }
+            glm::vec3 getPosition() const { return glm::vec3(inverseMatrix[3]); }
         private:
             glm::mat4 projectionMatrix{1.0f};
             glm::mat4 viewMatrix{1.0f};

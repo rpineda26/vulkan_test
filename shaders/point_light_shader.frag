@@ -30,11 +30,12 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     float time;
     
 } ubo;
+const float PI = 3.14159265359;
 void main() {
     float dis = sqrt(dot(fragOffset, fragOffset));
         
     if(dis >= 1.0) {
         discard;
     }
-    outColor = fragColor;
+    outColor = vec4(fragColor.xyz, 0.5 * (cos(dis*PI) + 1.0));
 }
