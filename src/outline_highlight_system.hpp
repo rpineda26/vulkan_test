@@ -15,7 +15,7 @@ namespace ve {
             ~OutlineHighlightSystem();
             OutlineHighlightSystem(const OutlineHighlightSystem&) = delete;
             OutlineHighlightSystem& operator=(const OutlineHighlightSystem&) = delete;
-            void renderGameObjects( FrameInfo& frameInfo, int selectedObject);
+            void renderGameObjects( FrameInfo& frameInfo);
 
         private:
             void createPipelineLayout(VkDescriptorSetLayout descriptorSetLayout);

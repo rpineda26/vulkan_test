@@ -12,6 +12,7 @@ struct PointLight {
     vec4 position;
     vec4 color;
     float radius;
+    int objId;
 };
 
 layout(set = 0, binding = 0) uniform UniformBufferObject {
@@ -21,6 +22,8 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     vec4 ambientLightColor;
     PointLight pointLights[10];
     int pointLightCount;
+    int selectedLight;
+    float time;
 } ubo;
 
 layout(push_constant) uniform Push {

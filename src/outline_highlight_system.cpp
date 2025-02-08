@@ -75,7 +75,7 @@ namespace ve {
     }
     
     
-    void OutlineHighlightSystem::renderGameObjects(FrameInfo& frameInfo, int selectedObject) {
+    void OutlineHighlightSystem::renderGameObjects(FrameInfo& frameInfo) {
         vePipeline->bind(frameInfo.commandBuffer);
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,
@@ -89,7 +89,7 @@ namespace ve {
         );
         for(auto& key_value : frameInfo.gameObjects){
             auto& obj = key_value.second;
-            if(obj.getId() == selectedObject && obj.lightComponent == nullptr){
+            if(obj.getId() == frameInfo.selectedObject && obj.lightComponent == nullptr){
                 SimplePushConstantData push{};
                 push.modelMatrix =  obj.transform.mat4();
                 push.normalMatrix = obj.transform.normalMatrix();

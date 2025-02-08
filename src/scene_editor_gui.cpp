@@ -13,7 +13,7 @@ namespace ve{
         ImGui::Begin("Scene Editor");
         addObject(gameObjects, numLights, selectedObject);
         if(ImGui::Checkbox("Highlight Outline", &isOutlignHighlight)){
-            // isOutlignHighlight = !isOutlignHighlight;
+            // isOutlignHighlight = !isOutlignHighlight; checkBox already updates the value
 
         }
         ImGui::Columns( 2);

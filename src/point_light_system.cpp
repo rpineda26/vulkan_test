@@ -62,13 +62,18 @@ namespace ve {
                 ubo.pointLights[lightIndex].position = glm::vec4(object.transform.translation,1.0f); //vec3 position is aligned as vec4
                 ubo.pointLights[lightIndex].color = glm::vec4(object.color, object.lightComponent->lightIntensity);
                 ubo.pointLights[lightIndex].radius = object.transform.scale.x;
+                ubo.pointLights[lightIndex].objId = key_value.first;
                 lightIndex++;
+                if(ubo.pointLights[lightIndex].objId == frameInfo.selectedObject){
+                    float pulse = 1.0f + 0.5f * glm::sin(frameInfo.elapsedTime * 5.0f); // Oscillates between 0.5 and 1.5
+                    ubo.pointLights[lightIndex].color *= pulse;
+                    ubo.pointLights[lightIndex].radius *= pulse;
+                }
             }
         }
         ubo.numLights = lightIndex;
-
     }
-    void PointLightSystem::render(FrameInfo& frameInfo, int numLights) {
+    void PointLightSystem::render(FrameInfo& frameInfo) {
         vePipeline->bind(frameInfo.commandBuffer);
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,
@@ -80,6 +85,6 @@ namespace ve {
             0,
             nullptr
         );
-        vkCmdDraw(frameInfo.commandBuffer, 6, numLights, 0, 0);
+        vkCmdDraw(frameInfo.commandBuffer, 6, frameInfo.numLights, 0, 0);
     }
 }

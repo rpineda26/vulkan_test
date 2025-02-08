@@ -92,6 +92,7 @@ namespace ve {
         InputController inputController{};
         //game time
         auto currentTime = std::chrono::high_resolution_clock::now();
+        static float elapsedTime = 0.0f;
         //initialize selected object to control
 
         //initialize imgui
@@ -106,7 +107,8 @@ namespace ve {
             auto newTime = std::chrono::high_resolution_clock::now();
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
-            frameTime = glm::min(frameTime, 0.1f); //clamp large frametimes
+            frameTime = glm::clamp(frameTime, 0.0001f, 0.1f); //clamp large frametimes
+            elapsedTime += frameTime;
 
             //update objects based on input
             inputController.inputLogic(veWindow.getGLFWWindow(), frameTime, gameObjects, viewerObject, selectedObject);
@@ -125,21 +127,24 @@ namespace ve {
                 sceneEditor.drawSceneEditor(gameObjects, selectedObject, viewerObject, numLights, showOutlignHighlight);
 
                 int frameIndex = veRenderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects};
+                FrameInfo frameInfo{frameIndex, frameTime, elapsedTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects, selectedObject, numLights, showOutlignHighlight};
                 //update global UBO
                 GlobalUbo globalUbo{};
                 globalUbo.projection = camera.getProjectionMatrix();
                 globalUbo.view = camera.getViewMatrix();
                 globalUbo.inverseView = camera.getInverseMatrix();
+                globalUbo.selectedLight = selectedObject;
+                globalUbo.frameTime = frameTime;     
+                std::cout << "Frame Time: " << globalUbo.frameTime << std::endl;
                 pointLightSystem.update(frameInfo, globalUbo);
                 uniformBuffers[frameIndex]->writeToBuffer(&globalUbo);
                 uniformBuffers[frameIndex]->flush();
                 //render
                 veRenderer.beginSwapChainRenderPass(commandBuffer);
                 simpleRenderSystem.renderGameObjects(frameInfo);
-                pointLightSystem.render(frameInfo, globalUbo.numLights);
+                pointLightSystem.render(frameInfo);
                 if(showOutlignHighlight)
-                    outlineHighlightSystem.renderGameObjects(frameInfo, selectedObject);
+                    outlineHighlightSystem.renderGameObjects(frameInfo);
                 VeImGui::renderImGuiFrame(commandBuffer);
                 veRenderer.endSwapChainRenderPass(commandBuffer);
                 veRenderer.endFrame();

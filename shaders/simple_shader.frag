@@ -12,6 +12,7 @@ struct PointLight{
     vec4 position;
     vec4 color;
     float radius; //only used in the shader for rendering the point light
+    int objId;
 };
 //camera view plus lighting
 layout(set = 0, binding = 0) uniform UniformBufferObject {
@@ -21,6 +22,8 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     vec4 ambientLightColor;
     PointLight lights[10];
     int lightCount;
+    int selectedLight;
+    float time;
 } ubo;
 layout(set = 0, binding = 1) uniform sampler2D textureSampler[5]; 
 layout(set = 0, binding = 2) uniform sampler2D normalSampler[5];
@@ -122,7 +125,6 @@ void main(){
     vec3 totalLight = vec3(0.0);
     for(int i = 0; i < ubo.lightCount; i++) {
         //define vectors
-        
         vec3 L = normalize(fragTangentLightPos[i] - fragTangentPos);
         vec3 H = normalize(L + V);
         //dot products

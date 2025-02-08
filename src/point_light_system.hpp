@@ -17,7 +17,7 @@ namespace ve {
             PointLightSystem& operator=(const PointLightSystem&) = delete;
 
             void update(FrameInfo& frameInfo, GlobalUbo& ubo);
-            void render( FrameInfo& frameInfo, int numLights);
+            void render( FrameInfo& frameInfo);
 
         private:
             void createPipelineLayout(VkDescriptorSetLayout descriptorSetLayout);
