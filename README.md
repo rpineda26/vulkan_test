@@ -1,8 +1,13 @@
 simple vulkan graphics engine\
-UPDATE: Press space bar to change textures
 
 dependencies: Vulkan, GLFW, GLM\
-provided dependencies: tinyobj, stb_image
+Note: The path for the VulkanSDK, GLFW, and GLM must be provided in the .env.cmake though in some devices these packages can be found by the Cmake script without specifying the path.\
+provided dependencies: tinyobj, stb_image, dear imgui\
+These dependencies are already provided in \external so their path in the .env are optional
+
+For Windows:\
+If using mingw: provide the mingw path in the .env.cmake\
+If using visual studio, specify the proper version in the cmakelist.txt line 41: `set(GLFW_LIB "${GLFW_PATH}/lib-vc2019")`
 
 to build and exectute the program:\
 <mark>unix systems</mark>\
@@ -10,26 +15,25 @@ to build and exectute the program:\
 `./unixhBuild.sh`\
 this script includes running the executable file
 
-<mark>windows</mark\
+<mark>windows</mark>\
 `./mingwBuild.bat`\
 the executable file can be found at 'build/VulkanEngine.exe'
 
 
-Controls:\
+Controls: Select the object in the imGui editor first\
 keyboard input:\
 //macros to select objects to move\
-1 = select camera\
-2 = select light source\
-3 = select vase\
-4 = select cube\
-5 = select floor
 
 //movement\
 wasd - walk\
 arrow keys - rotate\
-mouse nive - rotate
 
-
+Features:\
+select object to change property:\
+point light: change color, intensity, radius\
+game objects: change model, base color, albedo map, normal map, specular map, smoothness\
+add objects: point lights (Maximum of 10) and game objects\
+Toggle outline highlight: (works well on well defined edges).
 
 Here are the online references for this program\
 general project structure and setup:\
