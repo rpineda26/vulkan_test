@@ -4,6 +4,7 @@
 #include "buffer.hpp"
 #include "simple_render_system.hpp"
 #include "point_light_system.hpp"
+#include "outline_highlight_system.hpp"
 #include "ve_imgui.hpp"
 #include "utility.hpp"
 
@@ -81,6 +82,7 @@ namespace ve {
         //initialize render systems
         SimpleRenderSystem simpleRenderSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
         PointLightSystem pointLightSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
+        OutlineHighlightSystem outlineHighlightSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
         //create camera
         VeCamera camera{};
         auto viewerObject = VeGameObject::createGameObject();
@@ -135,6 +137,7 @@ namespace ve {
                 veRenderer.beginSwapChainRenderPass(commandBuffer);
                 simpleRenderSystem.renderGameObjects(frameInfo);
                 pointLightSystem.render(frameInfo, globalUbo.numLights);
+                outlineHighlightSystem.renderGameObjects(frameInfo, selectedObject);
                 VeImGui::renderImGuiFrame(commandBuffer);
                 veRenderer.endSwapChainRenderPass(commandBuffer);
                 veRenderer.endFrame();

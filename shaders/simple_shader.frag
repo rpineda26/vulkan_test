@@ -33,6 +33,7 @@ layout(push_constant) uniform Push {
     uint normalIndex;
     uint specularIndex;
     float smoothness;
+    vec3 baseColor;
 } push;
 
 const float PI = 3.14159265359;
