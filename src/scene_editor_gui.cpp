@@ -96,10 +96,20 @@ namespace ve{
                     }
                     //Texture
                     if(ImGui::CollapsingHeader("Textures")){
-                        ImGui::Text("Albedo Index");
-                        int textureIndex = object.getTextureIndex();
-                        ImGui::InputInt("##TextureIndex", &textureIndex);
-                        object.setTextureIndex(textureIndex%5);
+                        int selectedIndex = object.getTextureIndex();
+                       if (ImGui::BeginCombo("Select Albedo Map", textureFileNames[selectedIndex].c_str()))
+                        {
+                            for (int i = 0; i < textureFileNames.size(); ++i)
+                            {
+                                bool isSelected = (selectedIndex == i);
+                                if (ImGui::Selectable(textureFileNames[i].c_str(), isSelected))
+                                {
+                                    object.setTextureIndex(i); 
+                                    selectedIndex = i;          
+                                }
+                            }
+                            ImGui::EndCombo();
+                        }
                         // Color
                         ImGui::Text("Color");
                         ImGui::SameLine();
@@ -107,18 +117,36 @@ namespace ve{
                         if(ImGui::Button("Reset Color")){
                             object.color = glm::vec3(1.0);
                         }
-                        
                         //Normal Map
-                        ImGui::Text("Normal Map Index");
-                        ImGui::SameLine();
-                        int normalIndex = object.getNormalIndex();
-                        ImGui::InputInt("##NormalIndex", &normalIndex);
-                        object.setNormalIndex(normalIndex%5);
-                        int specularIndex = object.getSpecularIndex();
-                        ImGui::Text("Specular Map Index");
-                        ImGui::SameLine();
-                        ImGui::InputInt("##SpecularIndex", &specularIndex);
-                        object.setSpecularIndex(specularIndex%5);
+                        selectedIndex = object.getNormalIndex();
+                        if (ImGui::BeginCombo("Select Normal Map", textureFileNames[selectedIndex].c_str()))
+                        {
+                            for (int i = 0; i < textureFileNames.size(); ++i)
+                            {
+                                bool isSelected = (selectedIndex == i);
+                                if (ImGui::Selectable(textureFileNames[i].c_str(), isSelected))
+                                {
+                                    object.setNormalIndex(i);
+                                    selectedIndex = i;
+                                }
+                            }
+                            ImGui::EndCombo();
+                        }
+                        
+                        selectedIndex = object.getSpecularIndex();
+                       if (ImGui::BeginCombo("Select Specular Map", textureFileNames[selectedIndex].c_str()))
+                        {
+                            for (int i = 0; i < textureFileNames.size(); ++i)
+                            {
+                                bool isSelected = (selectedIndex == i);
+                                if (ImGui::Selectable(textureFileNames[i].c_str(), isSelected))
+                                {
+                                    object.setSpecularIndex(i);
+                                    selectedIndex = i;
+                                }
+                            }
+                            ImGui::EndCombo();
+                        }
                         ImGui::Text("Smoothness");
                         ImGui::SameLine();
                         float smoothness = object.getSmoothness();
