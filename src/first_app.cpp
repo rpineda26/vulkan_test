@@ -98,6 +98,7 @@ namespace ve {
         renderPass = VeImGui::createRenderPass(veDevice.device(), veRenderer.getSwapChainImageFormat(), veRenderer.getSwapChainDepthFormat());
         VeImGui::createImGuiContext(veDevice, veWindow, imGuiPool, renderPass, VeSwapChain::MAX_FRAMES_IN_FLIGHT);
         int numLights = getNumLights();
+        bool showOutlignHighlight = true;
         //main loop
         while (!veWindow.shouldClose()) {
             glfwPollEvents();
@@ -121,7 +122,7 @@ namespace ve {
                 //start new imgui frame
                 VeImGui::initializeImGuiFrame();
                 numLights = getNumLights();
-                sceneEditor.drawSceneEditor(gameObjects, selectedObject, viewerObject, numLights);
+                sceneEditor.drawSceneEditor(gameObjects, selectedObject, viewerObject, numLights, showOutlignHighlight);
 
                 int frameIndex = veRenderer.getFrameIndex();
                 FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects};
@@ -137,7 +138,8 @@ namespace ve {
                 veRenderer.beginSwapChainRenderPass(commandBuffer);
                 simpleRenderSystem.renderGameObjects(frameInfo);
                 pointLightSystem.render(frameInfo, globalUbo.numLights);
-                outlineHighlightSystem.renderGameObjects(frameInfo, selectedObject);
+                if(showOutlignHighlight)
+                    outlineHighlightSystem.renderGameObjects(frameInfo, selectedObject);
                 VeImGui::renderImGuiFrame(commandBuffer);
                 veRenderer.endSwapChainRenderPass(commandBuffer);
                 veRenderer.endFrame();

@@ -9,9 +9,13 @@ namespace ve{
         
     }
 
-    void SceneEditor::drawSceneEditor(VeGameObject::Map& gameObjects, int& selectedObject, VeGameObject& camera, int& numLights){
+    void SceneEditor::drawSceneEditor(VeGameObject::Map& gameObjects, int& selectedObject, VeGameObject& camera, int& numLights, bool& isOutlignHighlight){
         ImGui::Begin("Scene Editor");
         addObject(gameObjects, numLights, selectedObject);
+        if(ImGui::Checkbox("Highlight Outline", &isOutlignHighlight)){
+            // isOutlignHighlight = !isOutlignHighlight;
+
+        }
         ImGui::Columns( 2);
         // Game Objects Section
         if (ImGui::CollapsingHeader("Game Objects")) {

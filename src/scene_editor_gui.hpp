@@ -9,7 +9,7 @@ namespace ve {
     class SceneEditor {
         public:
             SceneEditor();
-            void drawSceneEditor(VeGameObject::Map& gameObjects, int& selectedObject, VeGameObject& camera, int& numLights);
+            void drawSceneEditor(VeGameObject::Map& gameObjects, int& selectedObject, VeGameObject& camera, int& numLights, bool& isOutlignHighlight);
             void drawObjectsColumn(VeGameObject::Map& gameObjects,int& selectedObject, bool isLight);
             void drawProperties(VeGameObject::Map& gameObjects, VeGameObject& camera);
             void addObject(VeGameObject::Map& gameObjects, int& numLights, int& selectedObject);
