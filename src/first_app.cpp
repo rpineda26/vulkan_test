@@ -5,6 +5,7 @@
 #include "simple_render_system.hpp"
 #include "point_light_system.hpp"
 #include "outline_highlight_system.hpp"
+#include "shadow_render_system.hpp"
 #include "ve_imgui.hpp"
 #include "utility.hpp"
 
@@ -23,11 +24,9 @@ namespace ve {
     FirstApp::FirstApp() { 
         //setup descriptor pools
         globalPool = VeDescriptorPool::Builder(veDevice)
-            .setMaxSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT * 15 + 2)  
-            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VeSwapChain::MAX_FRAMES_IN_FLIGHT) //CAMERA INFO
-            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5) //ALBEDO ARRAY
-            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5) //NORMAL MAP ARRAY
-            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VeSwapChain::MAX_FRAMES_IN_FLIGHT * 5) //SPECULAR MAP ARRAY
+            .setMaxSets(20000)  
+            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10000)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10000)
             #ifdef MACOS
             .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
             #endif
@@ -79,7 +78,9 @@ namespace ve {
                 .writeImage(3, specularMapInfos.data(),5)
                 .build(globalDescriptorSets[i]);
         }
+
         //initialize render systems
+        ShadowRenderSystem shadowRenderSystem{veDevice, globalSetLayout->getDescriptorSetLayout(), *globalPool};
         SimpleRenderSystem simpleRenderSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
         PointLightSystem pointLightSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
         OutlineHighlightSystem outlineHighlightSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };

@@ -18,9 +18,11 @@ namespace ve {
         glm::vec3 baseColor{1.0f};
     };
     ShadowRenderSystem::ShadowRenderSystem(
-        VeDevice& device, VkDescriptorSetLayout globalSetLayout
+        VeDevice& device, VkDescriptorSetLayout globalSetLayout,
+        VeDescriptorPool& globalPool
     ): veDevice{device} {
         createResources();
+        createDescriptors(globalPool);
         createRenderPass();
         createFrameBuffer();
         createPipelineLayout(globalSetLayout);
@@ -40,6 +42,7 @@ namespace ve {
     void ShadowRenderSystem::createResources(){
         //create Image
         VkImageCreateInfo imageInfo{};
+        imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
         imageInfo.extent.width = shadowResolution;
         imageInfo.extent.height = shadowResolution;
@@ -53,6 +56,7 @@ namespace ve {
         veDevice.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, shadowImage, shadowImageMemory);
         
         VkImageViewCreateInfo viewInfo{};
+        viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         viewInfo.image = shadowImage;
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         viewInfo.format = VK_FORMAT_D32_SFLOAT;
@@ -87,15 +91,31 @@ namespace ve {
             throw std::runtime_error("failed to create shadow sampler!");
         }
     }
+    void ShadowRenderSystem::createDescriptors(VeDescriptorPool& globalPool){
+        auto shadowSetLayout = VeDescriptorSetLayout::Builder(veDevice)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 1)
+            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1)
+            .build();
+        descriptorSetLayout = shadowSetLayout->getDescriptorSetLayout();
+        VkDescriptorImageInfo imageInfo{};
+        imageInfo.imageLayout = shadowLayout;
+        imageInfo.imageView = shadowImageView;
+        imageInfo.sampler = shadowSampler;
+        VeDescriptorWriter(*shadowSetLayout, globalPool)
+                .writeImage(1, &imageInfo,1)
+                .build(shadowDescriptorSet);
+    }
     void ShadowRenderSystem::createRenderPass(){
         VkAttachmentDescription shadowAttachment{};
         shadowAttachment.format = VK_FORMAT_D32_SFLOAT;
+        shadowAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         shadowAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         shadowAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
         shadowAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         shadowAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         shadowAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         shadowAttachment.finalLayout = shadowLayout;
+        shadowAttachment.flags = 0;
         VkAttachmentReference shadowReference{};
         shadowReference.attachment = 0;
         shadowReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -167,6 +187,9 @@ namespace ve {
         vertexShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
         vertexShaderStageInfo.module = vertShaderModule;
         vertexShaderStageInfo.pName = "main";
+        vertexShaderStageInfo.pNext = nullptr;
+        vertexShaderStageInfo.flags = 0;
+        vertexShaderStageInfo.pSpecializationInfo = nullptr;
         pipelineInfo.stageCount = 1;
         pipelineInfo.pStages = &vertexShaderStageInfo;
         //vertex inpit
@@ -174,10 +197,12 @@ namespace ve {
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions = VeModel::Vertex::getAttributeDescriptions();
         VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertexInputInfo.pNext = nullptr;
         vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
         vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
         vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
         vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+        vertexInputInfo.flags = 0;
         pipelineInfo.pVertexInputState = &vertexInputInfo;
         //input assembly
         VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
@@ -230,6 +255,16 @@ namespace ve {
         dynamicState.dynamicStateCount = 2;
         dynamicState.pDynamicStates = dynamicStates;
         pipelineInfo.pDynamicState = &dynamicState;
+        //multisampling
+        VkPipelineMultisampleStateCreateInfo multisampling{};
+        multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        multisampling.sampleShadingEnable = VK_FALSE;
+        multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+        multisampling.minSampleShading = 1.0f;
+        multisampling.pSampleMask = nullptr;
+        multisampling.alphaToCoverageEnable = VK_FALSE;
+        multisampling.alphaToOneEnable = VK_FALSE;
+        pipelineInfo.pMultisampleState = &multisampling;
         //pipeline layout
         pipelineInfo.layout = pipelineLayout;
         pipelineInfo.renderPass = renderPass;
@@ -267,7 +302,7 @@ namespace ve {
                 vkCmdPushConstants(
                     frameInfo.commandBuffer,
                     pipelineLayout,
-                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                    VK_SHADER_STAGE_VERTEX_BIT,
                     0,
                     sizeof(SimplePushConstantData),
                     &push

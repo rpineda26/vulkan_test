@@ -129,12 +129,15 @@ void main(){
         vec3 H = normalize(L + V);
         //dot products
         
-        float NdotL = max(dot(N, L), 0.0);
+        float NdotL = dot(N, L);
         float NdotH = max(dot(N, H), 0.0);
         float VdotH = max(dot(V, H), 0.0);
 
         //light attenuation
         vec3 directionToLight = fragTangentLightPos[i] - fragTangentPos;
+        // float constant = 1.0;
+        // float linear = 0.09;
+        // float quadratic = 0.032;
         float attenuation = 1.0 / dot(directionToLight, directionToLight);
         vec3 radiance = ubo.lights[i].color.xyz * ubo.lights[i].color.w * attenuation;
         directionToLight = normalize(directionToLight);
@@ -148,14 +151,14 @@ void main(){
 
         //diffuse component
         vec3 diffuse = albedo.rgb / PI;
-        totalLight += (diffuse + specular) * radiance * NdotL;
+        totalLight += (diffuse + specular) * radiance * max(NdotL,0.0);
     }
     //ambient light
     vec3 ambient = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w * albedo.rgb;
     vec3 finalColor = totalLight + ambient;
     //tone mapping
     // finalColor = finalColor / (finalColor + vec3(1.0));
-    // //gamma correction
+    // //gamma corrections
     // finalColor = pow(finalColor, vec3(1.0/2.2));
     outColor = vec4(finalColor, albedo.a);
 
