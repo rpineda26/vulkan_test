@@ -119,4 +119,31 @@ namespace ve {
         assert(commandBuffer == getCurrentCommandBuffer() && "Can't end render pass on command buffer from a different frame.");
         vkCmdEndRenderPass(commandBuffer);
     }
+    void VeRenderer::beginShadowRenderPass(VkCommandBuffer commandBuffer, VkRenderPass shadowRenderPass, VkFramebuffer shadowFrameBuffer, uint32_t shadowMapRes){
+         VkRenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDEASS_BEGIN_INFO;
+        renderPassInfo.renderPass = shadowRenderPass; 
+        renderPassInfo.framebuffer = shadowFrameBuffer; 
+        renderPassInfo.renderArea.offset = {0, 0};
+        renderPassInfo.renderArea.extent = {shadowMapRes, shadowMapRes};
+
+        VkClearValue clearValue{};
+        clearValue.depthStencil = {1.0f, 0};  // Clear depth buffer to far plane
+        renderPassInfo.clearValueCount = 1;
+        renderPassInfo.pClearValues = &clearValue;
+        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        VkViewport viewport{};
+        viewport.width = static_cast<float>(shadowMapRes);
+        viewport.height = static_cast<float>(shadowMapRes);
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+        VkRect2D scissor{};
+        scissor.extent.width = shadowMapRes;
+        scissor.extent.height = shadowMapRes;
+        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+        
+    }
 }

@@ -24,5 +24,6 @@ namespace ve {
             VeDevice& veDevice;
             std::unique_ptr<VePipeline> vePipeline;
             VkPipelineLayout pipelineLayout;
+            VkVertShaderModule vertShaderModule;
     };
 }

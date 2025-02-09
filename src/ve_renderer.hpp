@@ -19,6 +19,7 @@ namespace ve {
             void endFrame();
             void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
             void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
+            void beginShadowRenderPass(VkCommandBuffer commandBuffer, VkRenderPass shadowRenderPass, VkFramebuffer shadowFrameBuffer, uint32_t shadowMapRes);
 
             //getters
             VkRenderPass getSwapChainRenderPass() const { return veSwapChain->getRenderPass(); }
