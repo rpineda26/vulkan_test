@@ -119,31 +119,35 @@ namespace ve {
         assert(commandBuffer == getCurrentCommandBuffer() && "Can't end render pass on command buffer from a different frame.");
         vkCmdEndRenderPass(commandBuffer);
     }
-    void VeRenderer::beginShadowRenderPass(VkCommandBuffer commandBuffer, VkRenderPass shadowRenderPass, VkFramebuffer shadowFrameBuffer, uint32_t shadowMapRes){
-         VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDEASS_BEGIN_INFO;
-        renderPassInfo.renderPass = shadowRenderPass; 
-        renderPassInfo.framebuffer = shadowFrameBuffer; 
+    void VeRenderer::beginShadowRenderPass(VkCommandBuffer commandBuffer, ShadowRenderSystem& shadowRenderSystem){
+        VkRenderPassBeginInfo renderPassInfo{};
+        float resolution = shadowRenderSystem.getShadowResolution();
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass = shadowRenderSystem.getRenderPass(); 
+        renderPassInfo.framebuffer = shadowRenderSystem.getFrameBuffer(); 
         renderPassInfo.renderArea.offset = {0, 0};
-        renderPassInfo.renderArea.extent = {shadowMapRes, shadowMapRes};
+        renderPassInfo.renderArea.extent = {static_cast<uint16_t>(resolution), static_cast<uint16_t>(resolution)};
 
         VkClearValue clearValue{};
-        clearValue.depthStencil = {1.0f, 0};  // Clear depth buffer to far plane
+        clearValue.depthStencil = {1.0f, 0};
         renderPassInfo.clearValueCount = 1;
         renderPassInfo.pClearValues = &clearValue;
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+        
         VkViewport viewport{};
-        viewport.width = static_cast<float>(shadowMapRes);
-        viewport.height = static_cast<float>(shadowMapRes);
+        viewport.width = resolution;
+        viewport.height = resolution;
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
         vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
         VkRect2D scissor{};
-        scissor.extent.width = shadowMapRes;
-        scissor.extent.height = shadowMapRes;
+        scissor.extent.width = resolution;
+        scissor.extent.height = resolution;
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-        
+    }
+    void VeRenderer::endShadowRenderPass(VkCommandBuffer commandBuffer, ShadowRenderSystem& shadowRenderSystem){
+        vkCmdEndRenderPass(commandBuffer);
     }
 }

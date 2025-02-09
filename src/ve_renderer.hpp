@@ -2,6 +2,7 @@
 #include "ve_window.hpp"
 #include "ve_device.hpp"
 #include "ve_swap_chain.hpp"
+#include "shadow_render_system.hpp"
 #include <memory>
 #include <vector>
 #include <cassert>
@@ -19,7 +20,8 @@ namespace ve {
             void endFrame();
             void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
             void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
-            void beginShadowRenderPass(VkCommandBuffer commandBuffer, VkRenderPass shadowRenderPass, VkFramebuffer shadowFrameBuffer, uint32_t shadowMapRes);
+            void beginShadowRenderPass(VkCommandBuffer commandBuffer, ShadowRenderSystem& shadowRenderSystem);
+            void endShadowRenderPass(VkCommandBuffer commandBuffer, ShadowRenderSystem& shadowRenderSystem);
 
             //getters
             VkRenderPass getSwapChainRenderPass() const { return veSwapChain->getRenderPass(); }
