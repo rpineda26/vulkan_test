@@ -20,7 +20,7 @@ namespace ve {
             void endFrame();
             void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
             void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
-            void beginShadowRenderPass(VkCommandBuffer commandBuffer, ShadowRenderSystem& shadowRenderSystem);
+            void beginShadowRenderPass(VkCommandBuffer commandBuffer, ShadowRenderSystem& shadowRenderSystem, int lightIndex);
             void endShadowRenderPass(VkCommandBuffer commandBuffer, ShadowRenderSystem& shadowRenderSystem);
 
             //getters

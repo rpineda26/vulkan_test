@@ -119,12 +119,12 @@ namespace ve {
         assert(commandBuffer == getCurrentCommandBuffer() && "Can't end render pass on command buffer from a different frame.");
         vkCmdEndRenderPass(commandBuffer);
     }
-    void VeRenderer::beginShadowRenderPass(VkCommandBuffer commandBuffer, ShadowRenderSystem& shadowRenderSystem){
+    void VeRenderer::beginShadowRenderPass(VkCommandBuffer commandBuffer, ShadowRenderSystem& shadowRenderSystem, int lightIndex){
         VkRenderPassBeginInfo renderPassInfo{};
         float resolution = shadowRenderSystem.getShadowResolution();
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassInfo.renderPass = shadowRenderSystem.getRenderPass(); 
-        renderPassInfo.framebuffer = shadowRenderSystem.getFrameBuffer(); 
+        renderPassInfo.framebuffer = shadowRenderSystem.getFrameBuffer(lightIndex); 
         renderPassInfo.renderArea.offset = {0, 0};
         renderPassInfo.renderArea.extent = {static_cast<uint16_t>(resolution), static_cast<uint16_t>(resolution)};
 

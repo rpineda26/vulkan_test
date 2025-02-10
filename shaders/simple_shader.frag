@@ -151,7 +151,7 @@ void main(){
 
         //diffuse component
         vec3 diffuse = albedo.rgb / PI;
-        totalLight += (diffuse + specular) * radiance * max(NdotL,0.0);
+        totalLight += (diffuse + specular) * radiance * max(NdotL,0.0); //max(NdotL, ambient) if you want to see the object in the dark
     }
     //ambient light
     vec3 ambient = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w * albedo.rgb;
