@@ -8,24 +8,18 @@
 #include <stdexcept>
 #include <cassert>
 namespace ve {
-    struct SimplePushConstantData {
+    struct ObjectConstants{
         glm::mat4 modelMatrix{1.0f};
-        glm::mat4 normalMatrix{1.0f};
-        uint32_t textureIndex{0};
-        uint32_t normalIndex{0};
-        uint32_t specularIndex{0};
-        float smoothness{0.0f};
-        glm::vec3 baseColor{1.0f};
     };
     ShadowRenderSystem::ShadowRenderSystem(
-        VeDevice& device, VkDescriptorSetLayout globalSetLayout,
+        VeDevice& device,
         VeDescriptorPool& globalPool
     ): veDevice{device} {
         createResources();
         createDescriptors(globalPool);
         createRenderPass();
         createFrameBuffer();
-        createPipelineLayout(globalSetLayout);
+        createPipelineLayout();
         createPipeline();
     }
     ShadowRenderSystem::~ShadowRenderSystem() {
@@ -35,20 +29,16 @@ namespace ve {
         vkDestroyShaderModule(veDevice.device(), vertShaderModule, nullptr);
         for(int i = 0; i < 10; i++){
             vkDestroyFramebuffer(veDevice.device(), frameBuffers[i], nullptr);
-            vkDestroySampler(veDevice.device(), shadowSampler[i], nullptr);
-            vkDestroyImageView(veDevice.device(), shadowImageView[i], nullptr);
-            vkDestroyImage(veDevice.device(), shadowImage[i], nullptr);
-            vkFreeMemory(veDevice.device(), shadowImageMemory[i], nullptr);
+            vkDestroyFramebuffer(veDevice.device(), frameBuffers[i + 10], nullptr);
+            vkDestroySampler(veDevice.device(), shadowSamplers[i], nullptr);
+            vkDestroyImageView(veDevice.device(), shadowImageViews[i], nullptr);
+            vkDestroyImage(veDevice.device(), shadowImages[i], nullptr);
+            vkFreeMemory(veDevice.device(), shadowImageMemories[i], nullptr);
         }
-        //clean descriptor sets
     }
     void ShadowRenderSystem::createResources(){
         int numLights = 10;
-        for(int i = 0; i < numLights; i++){
-            VkImage image;
-            VkDeviceMemory imageMemory;
-            VkImageView imageView;
-            VkSampler sampler;
+        for(int i = 0; i < numLights; i ++){
             //create Image
             VkImageCreateInfo imageInfo{};
             imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -57,30 +47,33 @@ namespace ve {
             imageInfo.extent.height = shadowResolution;
             imageInfo.extent.depth = 1;
             imageInfo.mipLevels = 1;
-            imageInfo.arrayLayers = 1;
+            imageInfo.arrayLayers =  6;
             imageInfo.format = VK_FORMAT_D32_SFLOAT;
             imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
             imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
             imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-            veDevice.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
-            shadowImage.push_back(image);
+            imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+            VkImage shadowImage;
+            VkDeviceMemory shadowImageMemory;
+            veDevice.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, shadowImage, shadowImageMemory);
+            shadowImages.push_back(shadowImage);
+            shadowImageMemories.push_back(shadowImageMemory);
 
-    
             VkImageViewCreateInfo viewInfo{};
             viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            viewInfo.image = shadowImage[i];
-            viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            viewInfo.image = shadowImage;
+            viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
             viewInfo.format = VK_FORMAT_D32_SFLOAT;
             viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
             viewInfo.subresourceRange.baseMipLevel = 0;
             viewInfo.subresourceRange.levelCount = 1;
             viewInfo.subresourceRange.baseArrayLayer = 0;
-            viewInfo.subresourceRange.layerCount = 1;
-            if(vkCreateImageView(veDevice.device(), &viewInfo, nullptr, &imageView) != VK_SUCCESS){
+            viewInfo.subresourceRange.layerCount = 6;
+            VkImageView shadowImageView;
+            if(vkCreateImageView(veDevice.device(), &viewInfo, nullptr, &shadowImageView) != VK_SUCCESS){
                 throw std::runtime_error("failed to create shadow image view!");
             }
-            shadowImageView.push_back(imageView);
-
+            shadowImageViews.push_back(shadowImageView);
             //sampler
             VkSamplerCreateInfo samplerInfo{};
             samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -99,34 +92,53 @@ namespace ve {
             samplerInfo.mipLodBias = 0.0f;
             samplerInfo.minLod = 0.0f;
             samplerInfo.maxLod = 1.0f;
-            if(vkCreateSampler(veDevice.device(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS){
+            VkSampler shadowSampler;
+            if(vkCreateSampler(veDevice.device(), &samplerInfo, nullptr, &shadowSampler) != VK_SUCCESS){
                 throw std::runtime_error("failed to create shadow sampler!");
             }
-            shadowSampler.push_back(sampler);
+            shadowSamplers.push_back(shadowSampler);
         }
     }
     void ShadowRenderSystem::createDescriptors(VeDescriptorPool& globalPool){
-        auto shadowSetLayout = VeDescriptorSetLayout::Builder(veDevice)
-            // .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 1)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 10)
-            .build();
-        descriptorSetLayout = shadowSetLayout->getDescriptorSetLayout();
+
+        for(int i =0; i< VeSwapChain::MAX_FRAMES_IN_FLIGHT; i++){
+            auto uniformBuffers = std::make_unique<VeBuffer>(
+                veDevice,
+                sizeof(LightShadowUbo),
+                1,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+                veDevice.properties.limits.minUniformBufferOffsetAlignment
+            );
+            shadowBuffers.push_back(std::move(uniformBuffers));
+            shadowBuffers.back()->map();
+        }
         int numLights = 10;
+        shadowDescriptorSetLayout = VeDescriptorSetLayout::Builder(veDevice)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_VERTEX_BIT, numLights)
+            .build();
+        lightMatrixDescriptorSetLayout = VeDescriptorSetLayout::Builder(veDevice)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 1)
+            .build();
         std::vector<VkDescriptorImageInfo> imageInfos(numLights);
         for(int i = 0; i < numLights; i++){
-            VkDescriptorImageInfo imageInfo{};
+        VkDescriptorImageInfo imageInfo{};
             imageInfo.imageLayout = shadowLayout;
-            imageInfo.imageView = shadowImageView[i];
-            imageInfo.sampler = shadowSampler[i];
+            imageInfo.imageView = shadowImageViews[i];
+            imageInfo.sampler = shadowSamplers[i];
             imageInfos[i] = imageInfo;
         }
-        std::vector<VkDescriptorSet> sets(VeSwapChain::MAX_FRAMES_IN_FLIGHT);
+        std::vector<VkDescriptorSet> sets(VeSwapChain::MAX_FRAMES_IN_FLIGHT * 2);
         for(int i =0; i <VeSwapChain::MAX_FRAMES_IN_FLIGHT; i++){
-            VeDescriptorWriter(*shadowSetLayout, globalPool)
-                // .writeBuffer(0, nullptr)
-                .writeImage(0, imageInfos.data(),10)
+            auto buffer = shadowBuffers[i]->descriptorInfo();
+            VeDescriptorWriter(*shadowDescriptorSetLayout, globalPool)
+                .writeImage(0, imageInfos.data(), numLights)
                 .build(sets[i]);
             shadowDescriptorSets.push_back(sets[i]);
+            VeDescriptorWriter(*lightMatrixDescriptorSetLayout, globalPool)
+                .writeBuffer(0, &buffer)
+                .build(sets[VeSwapChain::MAX_FRAMES_IN_FLIGHT + i]);
+            lightMatrixDescriptorSets.push_back(sets[VeSwapChain::MAX_FRAMES_IN_FLIGHT + i]);
         }
     }
     void ShadowRenderSystem::createRenderPass(){
@@ -142,7 +154,7 @@ namespace ve {
         shadowAttachment.flags = 0;
         VkAttachmentReference shadowReference{};
         shadowReference.attachment = 0;
-        shadowReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        shadowReference.layout = shadowLayout;
         VkSubpassDescription subpass{};
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass.colorAttachmentCount = 0;
@@ -168,29 +180,34 @@ namespace ve {
     }
     void ShadowRenderSystem::createFrameBuffer(){
         int numLights = 10;
-        for(int i = 0; i < numLights; i++){
-            VkFramebuffer frameBuffer;
-            VkFramebufferCreateInfo framebufferInfo{};
-            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-            framebufferInfo.renderPass = renderPass;
-            framebufferInfo.attachmentCount = 1;
-            framebufferInfo.pAttachments = &shadowImageView[i];
-            framebufferInfo.width = shadowResolution;
-            framebufferInfo.height = shadowResolution;
-            framebufferInfo.layers = 1;
-            framebufferInfo.flags = 0;
-            if(vkCreateFramebuffer(veDevice.device(), &framebufferInfo, nullptr, &frameBuffer) != VK_SUCCESS){
-                throw std::runtime_error("failed to create framebuffer!");
+        for(int i = 0; i < VeSwapChain::MAX_FRAMES_IN_FLIGHT; i++){
+            for(int j = 0; j < numLights; j++){
+                VkFramebuffer frameBuffer;
+                VkFramebufferCreateInfo framebufferInfo{};
+
+
+                framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+                framebufferInfo.renderPass = renderPass;
+                framebufferInfo.attachmentCount = 1;
+                framebufferInfo.pAttachments = &shadowImageViews[j];
+                framebufferInfo.width = shadowResolution;
+                framebufferInfo.height = shadowResolution;
+                framebufferInfo.layers = 1;
+                framebufferInfo.flags = 0;
+                if(vkCreateFramebuffer(veDevice.device(), &framebufferInfo, nullptr, &frameBuffer) != VK_SUCCESS){
+                    throw std::runtime_error("failed to create framebuffer!");
+                }
+                frameBuffers.push_back(frameBuffer);
             }
-            frameBuffers.push_back(frameBuffer);
         }
     }
-    void ShadowRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
-        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout};
+    void ShadowRenderSystem::createPipelineLayout() {
+        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{lightMatrixDescriptorSetLayout->getDescriptorSetLayout()};
+  
         VkPushConstantRange pushConstantRange{};
-        pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
         pushConstantRange.offset = 0;
-        pushConstantRange.size = sizeof(SimplePushConstantData);
+        pushConstantRange.size = sizeof(ObjectConstants);
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -250,7 +267,7 @@ namespace ve {
         VkPipelineRasterizationStateCreateInfo rasterizationState{};
         rasterizationState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         rasterizationState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-        rasterizationState.depthClampEnable = VK_TRUE; // Prevents shadow map clipping
+        rasterizationState.depthClampEnable = VK_FALSE; 
         rasterizationState.rasterizerDiscardEnable = VK_FALSE;
         rasterizationState.polygonMode = VK_POLYGON_MODE_FILL;
         rasterizationState.lineWidth = 1.0f;
@@ -303,8 +320,62 @@ namespace ve {
         }
     }
     
+    void ShadowRenderSystem::updateLightSpaceMatrices(FrameInfo& frameInfo, int lightInstance){
+        // Shadow projection matrix (same for all faces)
+        glm::mat4 shadowProj = glm::perspective(
+            glm::radians(90.0f),  // 90 degree FOV for cube faces
+            1.0f,                 // 1:1 aspect ratio
+            0.1f,                 // near plane
+            25.0f                 // far plane (adjust based on your light radius)
+        );
+        
+        // Directions and up vectors for cubemap faces
+        const std::array<glm::vec3, 6> directions = {
+            { glm::vec3(1.0f, 0.0f, 0.0f),  // +X
+            glm::vec3(-1.0f, 0.0f, 0.0f), // -X
+            glm::vec3(0.0f, 1.0f, 0.0f),  // +Y
+            glm::vec3(0.0f, -1.0f, 0.0f), // -Y
+            glm::vec3(0.0f, 0.0f, 1.0f),  // +Z
+            glm::vec3(0.0f, 0.0f, -1.0f)  // -Z
+            }
+        };
+        
+        const std::array<glm::vec3, 6> ups = {
+            { glm::vec3(0.0f, -1.0f, 0.0f),  // +X
+            glm::vec3(0.0f, -1.0f, 0.0f),  // -X
+            glm::vec3(0.0f, 0.0f, 1.0f),   // +Y
+            glm::vec3(0.0f, 0.0f, -1.0f),  // -Y
+            glm::vec3(0.0f, -1.0f, 0.0f),  // +Z
+            glm::vec3(0.0f, -1.0f, 0.0f)   // -Z
+            }
+        };
+
+        int lightIndex = 0;
+        LightShadowUbo shadowUbo{};
+        for(auto& key_value : frameInfo.gameObjects){
+            auto& obj = key_value.second;
+            if(obj.lightComponent != nullptr){
+                if(lightIndex==lightInstance){
+                    for(int faceIndex = 0; faceIndex < 6; faceIndex++){
+                        glm::mat4 view = glm::lookAt(
+                            obj.transform.translation,
+                            obj.transform.translation.x + directions[faceIndex],
+                            ups[faceIndex]
+                        );
+                        int matrixIndex = lightIndex * 6 + faceIndex;
+                        shadowUbo.pointLightShadowMap.lightSpaceMatrix[matrixIndex] = shadowProj * view;
+                        shadowUbo.pointLightShadowMap.lightPosition = glm::vec4(obj.transform.translation,1.0f);
+                    }
+                }    
+                lightIndex++;
+            }
+        }
+        shadowUbo.numLights = lightIndex;
+        shadowBuffers[0]->writeToBuffer(&shadowUbo);
+        shadowBuffers[0]->flush();
+    }
     
-    void ShadowRenderSystem::renderGameObjects(FrameInfo& frameInfo) {
+    void ShadowRenderSystem::renderGameObjects(FrameInfo& frameInfo, int lightInstance){ 
         vkCmdBindPipeline(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,
@@ -312,32 +383,25 @@ namespace ve {
             pipelineLayout,
             0,
             1,
-            &frameInfo.descriptorSet,
+            &lightMatrixDescriptorSets[0],
             0,
             nullptr
         );
         for(auto& key_value : frameInfo.gameObjects){
             auto& obj = key_value.second;
             if(obj.lightComponent == nullptr){
-                SimplePushConstantData push{};
-                push.modelMatrix =  obj.transform.mat4();
-                push.normalMatrix = obj.transform.normalMatrix();
-                push.textureIndex = obj.getTextureIndex();
-                push.normalIndex = obj.getNormalIndex();
-                push.specularIndex = obj.getSpecularIndex();
-                push.smoothness = obj.getSmoothness();
-                push.baseColor = obj.color;
-                
+                ObjectConstants objConstants{};
+                objConstants.modelMatrix = obj.transform.mat4();
                 vkCmdPushConstants(
                     frameInfo.commandBuffer,
                     pipelineLayout,
                     VK_SHADER_STAGE_VERTEX_BIT,
                     0,
-                    sizeof(SimplePushConstantData),
-                    &push
+                    sizeof(ObjectConstants),
+                    &objConstants
                 );
                 obj.model->bind(frameInfo.commandBuffer);
-                obj.model->draw(frameInfo.commandBuffer);
+                obj.model->drawInstanced(frameInfo.commandBuffer, 6);
             }
         }
     }

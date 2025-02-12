@@ -28,6 +28,7 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
 layout(set = 0, binding = 1) uniform sampler2D textureSampler[5]; 
 layout(set = 0, binding = 2) uniform sampler2D normalSampler[5];
 layout(set = 0, binding = 3) uniform sampler2D specularSampler[5];
+layout(set = 1, binding = 0) uniform samplerCube shadowMapSampler[10];
 
 layout(push_constant) uniform Push {
     mat4 modelMatrix;
@@ -38,7 +39,6 @@ layout(push_constant) uniform Push {
     float smoothness;
     vec3 baseColor;
 } push;
-
 const float PI = 3.14159265359;
 const float minimumRoughness = 0.04;
 const float smoothness_input_weight = 0.75;
@@ -64,9 +64,53 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0) {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
+float ShadowSample(int index, vec3 directionToLight, samplerCube shadowSampler) {
+    // Bias and shadow map size
+    float shadowBias = 0.005;
+    float shadowMapSize = 1024.0;
+
+    // Calculate face index and texture coordinates
+    vec3 absDirection = abs(directionToLight);
+    int faceIndex;
+    vec2 shadowUV;
+
+    if (absDirection.x >= absDirection.y && absDirection.x >= absDirection.z) {
+        faceIndex = directionToLight.x > 0.0 ? 0 : 1;
+        shadowUV = vec2(-directionToLight.z, -directionToLight.y) / absDirection.x;
+    } else if (absDirection.y >= absDirection.x && absDirection.y >= absDirection.z) {
+        faceIndex = directionToLight.y > 0.0 ? 2 : 3;
+        shadowUV = vec2(directionToLight.x, -directionToLight.z) / absDirection.y;
+    } else {
+        faceIndex = directionToLight.z > 0.0 ? 4 : 5;
+        shadowUV = vec2(directionToLight.x, -directionToLight.y) / absDirection.z;
+    }
+
+    // Convert to [0,1] range for texture lookup
+    shadowUV = shadowUV * 0.5 + 0.5;
+
+    // Apply simple PCF filtering
+    float shadow = 0.0;
+    vec2 texelSize = vec2(1.0 / shadowMapSize); // shadow map texel size
+    int shadowLayer = index * 6 + faceIndex; // Assuming `index` represents the point light index
+
+    // PCF (Percentage-Closer Filtering)
+    for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+            vec2 offset = vec2(x, y) * texelSize;
+            float pcfDepth = texture(shadowSampler, vec3(shadowUV + offset, shadowLayer)).r;
+
+            // Apply bias and check shadow comparison
+            shadow += (pcfDepth + shadowBias < 1.0) ? 0.3 : 1.0;
+        }
+    }
+
+    // Normalize the shadow value after PCF
+    shadow /= 9.0;
+    return shadow;
+}
+
 //previous model implemented: blinn phong
 //this model is not updated to consider multiple point lights
-
 void Blinn_Phong() {
     //load albedo
     vec3 texColor = texture(textureSampler[push.textureIndex], fragUv).rgb;
@@ -81,6 +125,7 @@ void Blinn_Phong() {
 
     vec3 directionToLight = fragTangentLightPos[0] - fragTangentPos;
     float attenuation = 1.0 / dot(directionToLight, directionToLight);
+    
     directionToLight = normalize(directionToLight);
 
     //diffused light
@@ -104,7 +149,7 @@ void Blinn_Phong() {
 //PBR: specular workflow
 void main(){
     //load texture maps
-    vec4 albedo = texture(textureSampler[push.textureIndex], fragUv); // include alpha
+    vec4 albedo = texture(textureSampler[push.textureIndex], fragUv); // include alpha//shadow sampling
     albedo = albedo * vec4(fragColor, 1.0);
     vec3 surfaceNormal = texture(normalSampler[push.normalIndex], fragUv).rgb;
     vec4 specularSample = texture(specularSampler[push.specularIndex], fragUv);
@@ -134,13 +179,17 @@ void main(){
         float VdotH = max(dot(V, H), 0.0);
 
         //light attenuation
+        
         vec3 directionToLight = fragTangentLightPos[i] - fragTangentPos;
-        // float constant = 1.0;
-        // float linear = 0.09;
-        // float quadratic = 0.032;
-        float attenuation = 1.0 / dot(directionToLight, directionToLight);
+
+        float lightDistance = length(directionToLight);
+        float constant = 1.0;
+        float linear = 0.09;
+        float quadratic = 0.032;
+        float attenuation = 1.0 / (constant* linear + quadratic * dot(directionToLight, directionToLight));
         vec3 radiance = ubo.lights[i].color.xyz * ubo.lights[i].color.w * attenuation;
-        directionToLight = normalize(directionToLight);
+
+        float shadowFactor = ShadowSample(i, directionToLight, shadowMapSampler[i]);
 
         //specular bdrf components
         float D = Dist_GGX(NdotH, roughness);
@@ -151,7 +200,7 @@ void main(){
 
         //diffuse component
         vec3 diffuse = albedo.rgb / PI;
-        totalLight += (diffuse + specular) * radiance * max(NdotL,0.0); //max(NdotL, ambient) if you want to see the object in the dark
+        totalLight += (diffuse + specular) * radiance * max(NdotL,0.0) * shadowFactor; //max(NdotL, ambient) if you want to see the object in the dark
     }
     //ambient light
     vec3 ambient = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w * albedo.rgb;

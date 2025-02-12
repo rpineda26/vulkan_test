@@ -7,32 +7,32 @@
 #include "frame_info.hpp"
 #include "ve_descriptors.hpp"
 #include "ve_swap_chain.hpp"
-
+#include "buffer.hpp"  
 #include <memory>
 #include <vector>
 namespace ve {
     class ShadowRenderSystem{
         public:
-            ShadowRenderSystem(VeDevice& device,VkDescriptorSetLayout descriptorSetLayout, VeDescriptorPool& globalPool);
+            ShadowRenderSystem(VeDevice& device, VeDescriptorPool& globalPool);
             ~ShadowRenderSystem();
             ShadowRenderSystem(const ShadowRenderSystem&) = delete;
             ShadowRenderSystem& operator=(const ShadowRenderSystem&) = delete;
-            void renderGameObjects( FrameInfo& frameInfo );
+            void renderGameObjects( FrameInfo& frameInfo, int lightInstance);
             VkRenderPass getRenderPass() const { return renderPass; }
-            VkImageView getShadowImageView(int lightIndex) const { return shadowImageView[lightIndex]; }
-            VkSampler getShadowSampler(int lightIndex) const { return shadowSampler[lightIndex]; }
-            VkImageLayout getShadowLayout() const { return shadowLayout; }
+
             float getShadowResolution() const { return shadowResolution; }
             VkFramebuffer getFrameBuffer(int lightIndex) const { return frameBuffers[lightIndex]; }
             VkDescriptorSet getShadowDescriptorSet(int frameIndex) const { return shadowDescriptorSets[frameIndex]; }
-            VkDescriptorSetLayout getDescriptorSetLayout() const { return descriptorSetLayout; }
+            VkDescriptorSetLayout getDescriptorSetLayout() const { return shadowDescriptorSetLayout->getDescriptorSetLayout(); }
+            VkImage getShadowImage(int lightIndex) const { return shadowImages[lightIndex]; }
+            void updateLightSpaceMatrices(FrameInfo& frameInfo, int lightInstance);
 
         private:
             void createResources();
             void createDescriptors(VeDescriptorPool& globalPool);
             void createRenderPass();
             void createFrameBuffer();
-            void createPipelineLayout(VkDescriptorSetLayout descriptorSetLayout);
+            void createPipelineLayout();
             void createPipeline();
             void createShadowShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
 
@@ -44,13 +44,18 @@ namespace ve {
             std::vector<VkFramebuffer> frameBuffers;
             VkPipeline graphicsPipeline;
             VkShaderModule vertShaderModule;
-            std::vector<VkImage> shadowImage;
-            std::vector<VkImageView> shadowImageView;
-            std::vector<VkSampler> shadowSampler;
+    
+            std::vector<VkImage> shadowImages;
+            std::vector<VkImageView> shadowImageViews;
+            std::vector<VkDeviceMemory> shadowImageMemories;
+            std::vector<VkSampler> shadowSamplers;
+
             VkImageLayout shadowLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            std::vector<VkDeviceMemory> shadowImageMemory;
             std::vector<VkDescriptorSet> shadowDescriptorSets;
-            VkDescriptorSetLayout descriptorSetLayout;
+            std::vector<VkDescriptorSet> lightMatrixDescriptorSets;
+            std::unique_ptr<VeDescriptorSetLayout> shadowDescriptorSetLayout;
+            std::unique_ptr<VeDescriptorSetLayout> lightMatrixDescriptorSetLayout;
+            std::vector<std::unique_ptr<VeBuffer>> shadowBuffers;
             float shadowResolution = 1024;
     };
 }

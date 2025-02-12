@@ -6,6 +6,14 @@
 
 #define MAX_POINT_LIGHTS 10
 namespace ve{
+    struct PointLightShadowMap{
+        glm::mat4 lightSpaceMatrix[6];
+        glm::vec4 lightPosition;
+    };
+    struct LightShadowUbo{
+        PointLightShadowMap pointLightShadowMap;
+        int numLights;
+    };
     struct alignas(16)PointLight{
         glm::vec4 position{}; //ignore w, align with 16 bytes
         glm::vec4 color{}; // w is intensity

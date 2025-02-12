@@ -76,6 +76,13 @@ namespace ve{
             vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
         }
     }
+    void VeModel::drawInstanced(VkCommandBuffer commandBuffer, uint32_t instanceCount){
+        if(hasIndexBuffer){
+            vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, 0, 0, 0);
+        }else{
+            vkCmdDraw(commandBuffer, vertexCount, instanceCount, 0, 0);
+        }
+    }
     std::vector<VkVertexInputBindingDescription> VeModel::Vertex::getBindingDescriptions(){
         std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
         bindingDescriptions[0].binding = 0;

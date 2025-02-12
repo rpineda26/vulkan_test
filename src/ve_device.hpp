@@ -107,9 +107,9 @@ class VeDevice {
   //add vk_KHR_portability_subset to the list of required extensions for macOS
   bool setMACOSExtensionSupport();
   #ifdef MACOS
-    std::vector<const char *>deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset"};
+    std::vector<const char *>deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset", VK_EXT_SHADER_VIEWPORT_INDEX_LAYER_EXTENSION_NAME};
   #else
-    std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+    std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_EXT_SHADER_VIEWPORT_INDEX_LAYER_EXTENSION_NAME};
   #endif
   };
 

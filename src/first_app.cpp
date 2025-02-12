@@ -80,8 +80,8 @@ namespace ve {
         }
 
         //initialize render systems
-        ShadowRenderSystem shadowRenderSystem{veDevice, globalSetLayout->getDescriptorSetLayout(), *globalPool};
-        SimpleRenderSystem simpleRenderSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
+        ShadowRenderSystem shadowRenderSystem{veDevice, *globalPool };
+        SimpleRenderSystem simpleRenderSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout(), shadowRenderSystem.getDescriptorSetLayout() };
         PointLightSystem pointLightSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
         OutlineHighlightSystem outlineHighlightSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
         //create camera
@@ -120,6 +120,7 @@ namespace ve {
             // camera.setOrtho(-aspect, aspect, -0.9f, 0.9f, -1.0f, 1.0f);
             camera.setPerspective(glm::radians(45.0f), aspect, 0.1f, 1500.0f);
             
+            
             //render frame
             if(auto commandBuffer = veRenderer.beginFrame()){
                 //start new imgui frame
@@ -140,10 +141,18 @@ namespace ve {
                 pointLightSystem.update(frameInfo, globalUbo);
                 uniformBuffers[frameIndex]->writeToBuffer(&globalUbo);
                 uniformBuffers[frameIndex]->flush();
-                //render
-                
+                //render shadow maps
+                for(int i =0; i <numLights; i ++){
+                    //update shadow render system
+                    shadowRenderSystem.updateLightSpaceMatrices(frameInfo, i);
+                    //render
+                    veRenderer.beginShadowRenderPass(commandBuffer, shadowRenderSystem, frameIndex * 10 + i);
+                    shadowRenderSystem.renderGameObjects(frameInfo, i);
+                    veRenderer.endShadowRenderPass(commandBuffer, shadowRenderSystem, i);
+                }
+                //render scene
                 veRenderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(frameInfo);
+                simpleRenderSystem.renderGameObjects(frameInfo, shadowRenderSystem.getShadowDescriptorSet(frameIndex));
                 pointLightSystem.render(frameInfo);
                 if(showOutlignHighlight)
                     outlineHighlightSystem.renderGameObjects(frameInfo);

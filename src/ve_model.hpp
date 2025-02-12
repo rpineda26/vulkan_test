@@ -41,6 +41,7 @@ namespace ve{
         static std::unique_ptr<VeModel> createModelFromFile(VeDevice& device, const std::string& filePath);
         void bind(VkCommandBuffer commandBuffer);
         void draw(VkCommandBuffer commandBuffer);
+        void drawInstanced(VkCommandBuffer commandBuffer, uint32_t instanceCount);
 
     private:
         void createVertexBuffers(const std::vector<Vertex>& vertices);
