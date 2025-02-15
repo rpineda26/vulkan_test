@@ -136,6 +136,7 @@ void VeDevice::pickPhysicalDevice() {
 
   vkGetPhysicalDeviceProperties(physicalDevice, &properties);
   std::cout << "physical device: " << properties.deviceName << std::endl;
+  std::cout<< "Max samplers per stage: " << properties.limits.maxPerStageDescriptorSamplers << std::endl;
 }
 
 void VeDevice::createLogicalDevice() {

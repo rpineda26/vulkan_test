@@ -149,29 +149,29 @@ namespace ve {
     }
     void VeRenderer::endShadowRenderPass(VkCommandBuffer commandBuffer, ShadowRenderSystem& shadowRenderSystem, int lightIndex){
         vkCmdEndRenderPass(commandBuffer);
-        // VkImageMemoryBarrier barrier = {};
-        // barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        // barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT; // Depth writes during shadow map pass
-        // barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT; // Allow shaders to read from the image
-        // barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED; // After the render pass
-        // barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; // Final layout for sampling
-        // barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        // barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        // barrier.image = shadowRenderSystem.getShadowImage(lightIndex);
-        // barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT; // Depth aspect
-        // barrier.subresourceRange.baseMipLevel = 0;
-        // barrier.subresourceRange.levelCount = 1;
-        // barrier.subresourceRange.baseArrayLayer = 0;
-        // barrier.subresourceRange.layerCount = 1;
+        VkImageMemoryBarrier barrier = {};
+        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT; // Depth writes during shadow map pass
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT; // Allow shaders to read from the image
+        barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED; // After the render pass
+        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; // Final layout for sampling
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = shadowRenderSystem.getShadowImage(lightIndex);
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT; // Depth aspect
+        barrier.subresourceRange.baseMipLevel = 0;
+        barrier.subresourceRange.levelCount = 1;
+        barrier.subresourceRange.baseArrayLayer = 0;
+        barrier.subresourceRange.layerCount = 1;
 
-        // vkCmdPipelineBarrier(
-        //     commandBuffer,
-        //     VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,  // Source stage
-        //     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,      // Destination stage
-        //     0,                                          // Flags (no dependencies here)
-        //     0, nullptr,                                 // No memory barriers
-        //     0, nullptr,                                 // No buffer memory barriers
-        //     1, &barrier                                 // One image memory barrier (our shadow map)
-        // );
+        vkCmdPipelineBarrier(
+            commandBuffer,
+            VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,  // Source stage
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,      // Destination stage
+            0,                                          // Flags (no dependencies here)
+            0, nullptr,                                 // No memory barriers
+            0, nullptr,                                 // No buffer memory barriers
+            1, &barrier                                 // One image memory barrier (our shadow map)
+        );
     }
 }

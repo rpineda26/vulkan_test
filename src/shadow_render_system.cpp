@@ -115,7 +115,7 @@ namespace ve {
         }
         int numLights = 10;
         shadowDescriptorSetLayout = VeDescriptorSetLayout::Builder(veDevice)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_VERTEX_BIT, numLights)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, numLights)
             .build();
         lightMatrixDescriptorSetLayout = VeDescriptorSetLayout::Builder(veDevice)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 1)
@@ -154,7 +154,7 @@ namespace ve {
         shadowAttachment.flags = 0;
         VkAttachmentReference shadowReference{};
         shadowReference.attachment = 0;
-        shadowReference.layout = shadowLayout;
+        shadowReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         VkSubpassDescription subpass{};
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass.colorAttachmentCount = 0;
@@ -192,7 +192,7 @@ namespace ve {
                 framebufferInfo.pAttachments = &shadowImageViews[j];
                 framebufferInfo.width = shadowResolution;
                 framebufferInfo.height = shadowResolution;
-                framebufferInfo.layers = 1;
+                framebufferInfo.layers = 6;
                 framebufferInfo.flags = 0;
                 if(vkCreateFramebuffer(veDevice.device(), &framebufferInfo, nullptr, &frameBuffer) != VK_SUCCESS){
                     throw std::runtime_error("failed to create framebuffer!");

@@ -62,9 +62,9 @@ namespace ve {
         //bind descriptor set layout
         auto globalSetLayout = VeDescriptorSetLayout::Builder(veDevice)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 1)
-            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5)
-            .addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5)
-            .addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5)
+            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3)
+            .addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3)
+            // .addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5)
             .build();
 
         //create global descriptor pool
@@ -73,9 +73,9 @@ namespace ve {
             auto bufferInfo = uniformBuffers[i]->descriptorInfo();
             VeDescriptorWriter(*globalSetLayout, *globalPool)
                 .writeBuffer(0, &bufferInfo)
-                .writeImage(1, textureInfos.data(),5)
-                .writeImage(2, normalMapInfos.data(),5)
-                .writeImage(3, specularMapInfos.data(),5)
+                .writeImage(1, textureInfos.data(),3)
+                .writeImage(2, normalMapInfos.data(),3)
+                // .writeImage(3, specularMapInfos.data(),5)
                 .build(globalDescriptorSets[i]);
         }
 
@@ -137,7 +137,6 @@ namespace ve {
                 globalUbo.inverseView = camera.getInverseMatrix();
                 globalUbo.selectedLight = selectedObject;
                 globalUbo.frameTime = frameTime;     
-                std::cout << "Frame Time: " << globalUbo.frameTime << std::endl;
                 pointLightSystem.update(frameInfo, globalUbo);
                 uniformBuffers[frameIndex]->writeToBuffer(&globalUbo);
                 uniformBuffers[frameIndex]->flush();
@@ -210,15 +209,15 @@ namespace ve {
         textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/brick_texture.png"));
         textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/metal.tga"));
         textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/wood.png"));
-        textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/wall_gray.png"));
-        textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/tile.png"));
+        // textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/wall_gray.png"));
+        // textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/tile.png"));
         // textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/stone.png"));
         //normal maps
         normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/brick_normal.png"));
         normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/metal_normal.tga"));
         normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wood_normal.png"));
-        normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wall_gray_normal.png"));
-        normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/tile_normal.png"));
+        // normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wall_gray_normal.png"));
+        // normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/tile_normal.png"));
         // normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/stone_normal.png"));
         //specular maps
         specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/brick_specular.png"));

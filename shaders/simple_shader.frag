@@ -25,9 +25,9 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     int selectedLight;
     float time;
 } ubo;
-layout(set = 0, binding = 1) uniform sampler2D textureSampler[5]; 
-layout(set = 0, binding = 2) uniform sampler2D normalSampler[5];
-layout(set = 0, binding = 3) uniform sampler2D specularSampler[5];
+layout(set = 0, binding = 1) uniform sampler2D textureSampler[3]; 
+layout(set = 0, binding = 2) uniform sampler2D normalSampler[3];
+// layout(set = 0, binding = 3) uniform sampler2D specularSampler[5];
 layout(set = 1, binding = 0) uniform samplerCube shadowMapSampler[10];
 
 layout(push_constant) uniform Push {
@@ -64,49 +64,11 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0) {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-float ShadowSample(int index, vec3 directionToLight, samplerCube shadowSampler) {
-    // Bias and shadow map size
-    float shadowBias = 0.005;
-    float shadowMapSize = 1024.0;
-
-    // Calculate face index and texture coordinates
-    vec3 absDirection = abs(directionToLight);
-    int faceIndex;
-    vec2 shadowUV;
-
-    if (absDirection.x >= absDirection.y && absDirection.x >= absDirection.z) {
-        faceIndex = directionToLight.x > 0.0 ? 0 : 1;
-        shadowUV = vec2(-directionToLight.z, -directionToLight.y) / absDirection.x;
-    } else if (absDirection.y >= absDirection.x && absDirection.y >= absDirection.z) {
-        faceIndex = directionToLight.y > 0.0 ? 2 : 3;
-        shadowUV = vec2(directionToLight.x, -directionToLight.z) / absDirection.y;
-    } else {
-        faceIndex = directionToLight.z > 0.0 ? 4 : 5;
-        shadowUV = vec2(directionToLight.x, -directionToLight.y) / absDirection.z;
-    }
-
-    // Convert to [0,1] range for texture lookup
-    shadowUV = shadowUV * 0.5 + 0.5;
-
-    // Apply simple PCF filtering
-    float shadow = 0.0;
-    vec2 texelSize = vec2(1.0 / shadowMapSize); // shadow map texel size
-    int shadowLayer = index * 6 + faceIndex; // Assuming `index` represents the point light index
-
-    // PCF (Percentage-Closer Filtering)
-    for (int x = -1; x <= 1; ++x) {
-        for (int y = -1; y <= 1; ++y) {
-            vec2 offset = vec2(x, y) * texelSize;
-            float pcfDepth = texture(shadowSampler, vec3(shadowUV + offset, shadowLayer)).r;
-
-            // Apply bias and check shadow comparison
-            shadow += (pcfDepth + shadowBias < 1.0) ? 0.3 : 1.0;
-        }
-    }
-
-    // Normalize the shadow value after PCF
-    shadow /= 9.0;
-    return shadow;
+// Helper function to transform world position to light space
+vec3 WorldToLightSpace(vec3 worldPos, int lightIndex) {
+    // Assuming you have access to light position
+    vec3 lightPos = ubo.lights[lightIndex].position.xyz;
+    return worldPos - lightPos;
 }
 
 //previous model implemented: blinn phong
@@ -152,12 +114,14 @@ void main(){
     vec4 albedo = texture(textureSampler[push.textureIndex], fragUv); // include alpha//shadow sampling
     albedo = albedo * vec4(fragColor, 1.0);
     vec3 surfaceNormal = texture(normalSampler[push.normalIndex], fragUv).rgb;
-    vec4 specularSample = texture(specularSampler[push.specularIndex], fragUv);
-    vec3 specularColor = specularSample.rgb;
+    // vec4 specularSample = texture(specularSampler[push.specularIndex], fragUv);
+    // vec3 specularColor = specularSample.rgb;
+    vec3 specularColor = vec3(0.04);
 
     //convert smoothness to roughness
-    float smoothness = mix(specularSample.a, push.smoothness, smoothness_input_weight);
-    float roughness = 1 - push.smoothness * specularSample.a;
+    // float smoothness = mix(specularSample.a, push.smoothness, smoothness_input_weight);
+    // float roughness = 1 - push.smoothness * specularSample.a;
+    float roughness = 1 - push.smoothness;
     roughness = max(roughness, minimumRoughness);
 
 
@@ -168,6 +132,7 @@ void main(){
 
     //calculate lighting
     vec3 totalLight = vec3(0.0);
+    float shadowFactor = 1.0;
     for(int i = 0; i < ubo.lightCount; i++) {
         //define vectors
         vec3 L = normalize(fragTangentLightPos[i] - fragTangentPos);
@@ -189,7 +154,8 @@ void main(){
         float attenuation = 1.0 / (constant* linear + quadratic * dot(directionToLight, directionToLight));
         vec3 radiance = ubo.lights[i].color.xyz * ubo.lights[i].color.w * attenuation;
 
-        float shadowFactor = ShadowSample(i, directionToLight, shadowMapSampler[i]);
+        // Usage in main shader:
+        shadowFactor += sampler(shadowMapSampler[i], fragUv);
 
         //specular bdrf components
         float D = Dist_GGX(NdotH, roughness);
@@ -209,6 +175,7 @@ void main(){
     // finalColor = finalColor / (finalColor + vec3(1.0));
     // //gamma corrections
     // finalColor = pow(finalColor, vec3(1.0/2.2));
-    outColor = vec4(finalColor, albedo.a);
+    // outColor = vec4(finalColor, albedo.a);
+    outColr = vec4(1.0-(1.0-shadowFactor) * 100.0);
 
 }

@@ -148,7 +148,6 @@ namespace ve{
         ImGui::Render();
         ImDrawData *main_draw_data = ImGui::GetDrawData();
         if (main_draw_data) {
-            std::cout << "Draw data exists with " << main_draw_data->CmdListsCount << " command lists\n";
             ImGui_ImplVulkan_RenderDrawData(main_draw_data, commandBuffer);
         }
     }
