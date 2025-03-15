@@ -17,7 +17,8 @@ namespace ve{
         "cube",
         "quad",
         "flat_vase",
-        "smooth_vase"
+        "smooth_vase",
+        "Cute_Demon"
     };
     inline const std::vector<std::string> textureFileNames = {
         "brick_texture",
@@ -33,12 +34,13 @@ namespace ve{
         preLoadedModels["flat_vase"] = VeModel::createModelFromFile(veDevice, "models/flat_vase.obj");
         preLoadedModels["smooth_vase"] = VeModel::createModelFromFile(veDevice, "models/smooth_vase.obj");
         preLoadedModels["colored_cube"] = VeModel::createModelFromFile(veDevice, "models/colored_cube.obj");
+        preLoadedModels["Cute_Demon"] = VeModel::createModelFromFile(veDevice, "models/Cute_Demon.glb");
     }
     inline void cleanupPreloadedModels() {
     for (auto& [key, model] : preLoadedModels) {
-        model.reset();  // ✅ Explicitly release shared pointers
+        model.reset(); 
     }
-    preLoadedModels.clear();  // ✅ Ensure the map is emptied
+    preLoadedModels.clear();  
 }
 
 }

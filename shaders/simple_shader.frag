@@ -25,10 +25,10 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     int selectedLight;
     float time;
 } ubo;
-layout(set = 0, binding = 1) uniform sampler2D textureSampler[3]; 
-layout(set = 0, binding = 2) uniform sampler2D normalSampler[3];
-// layout(set = 0, binding = 3) uniform sampler2D specularSampler[5];
-layout(set = 1, binding = 0) uniform samplerCube shadowMapSampler[10];
+layout(set = 1, binding = 0) uniform sampler2D textureSampler[3]; 
+layout(set = 1, binding = 1) uniform sampler2D normalSampler[3];
+layout(set = 1, binding = 2) uniform sampler2D specularSampler[5];
+// layout(set = 1, binding = 0) uniform samplerCube shadowMapSampler[10];
 
 layout(push_constant) uniform Push {
     mat4 modelMatrix;
@@ -63,14 +63,24 @@ float Geometric_Shading_Smith(float NdotV, float NdotL, float roughness) {
 vec3 FresnelSchlick(float cosTheta, vec3 F0) {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
+float SampleShadowMapCube(samplerCube shadowMap, vec3 worldPos, vec3 lightToFrag, float bias) {
 
-// Helper function to transform world position to light space
-vec3 WorldToLightSpace(vec3 worldPos, int lightIndex) {
-    // Assuming you have access to light position
-    vec3 lightPos = ubo.lights[lightIndex].position.xyz;
-    return worldPos - lightPos;
+    // Get current depth (distance from light to fragment)
+    float currentDepth = length(lightToFrag);
+    
+    // Normalize direction for cubemap lookup
+    vec3 direction = normalize(lightToFrag);
+    
+    // Sample the shadow map (the depth stored in the cubemap)
+    float closestDepth = texture(shadowMap, direction).r;
+    
+    // If using a depth perspective projection matrix, you'll need to linearize this depth value
+    // Convert closestDepth from [0,1] to actual distance value
+    // Assuming you stored linear depth or applied the conversion in the shadow map shader
+    
+    // Check if fragment is in shadow
+    return (currentDepth - bias > closestDepth) ? 0.0 : 1.0;
 }
-
 //previous model implemented: blinn phong
 //this model is not updated to consider multiple point lights
 void Blinn_Phong() {
@@ -155,7 +165,7 @@ void main(){
         vec3 radiance = ubo.lights[i].color.xyz * ubo.lights[i].color.w * attenuation;
 
         // Usage in main shader:
-        shadowFactor += sampler(shadowMapSampler[i], fragUv);
+        // shadowFactor += SampleShadowMapCube(shadowMapSampler[i], fragTangentPos, directionToLight, 0.01);
 
         //specular bdrf components
         float D = Dist_GGX(NdotH, roughness);
@@ -175,7 +185,7 @@ void main(){
     // finalColor = finalColor / (finalColor + vec3(1.0));
     // //gamma corrections
     // finalColor = pow(finalColor, vec3(1.0/2.2));
-    // outColor = vec4(finalColor, albedo.a);
-    outColr = vec4(1.0-(1.0-shadowFactor) * 100.0);
+    outColor = vec4(finalColor, albedo.a);
+    // outColor = vec4(1.0-(1.0-shadowFactor) * 100.0);
 
 }

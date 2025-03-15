@@ -11,14 +11,14 @@
 namespace ve {
     class SimpleRenderSystem{
         public:
-            SimpleRenderSystem(VeDevice& device, VkRenderPass renderPass ,VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSetLayout shadowSetLayout);    
+            SimpleRenderSystem(VeDevice& device, VkRenderPass renderPass ,VkDescriptorSetLayout descriptorSetLayout, /*VkDescriptorSetLayout shadowSetLayout,*/ VkDescriptorSetLayout textureSetLayout);    
             ~SimpleRenderSystem();
             SimpleRenderSystem(const SimpleRenderSystem&) = delete;
             SimpleRenderSystem& operator=(const SimpleRenderSystem&) = delete;
-            void renderGameObjects( FrameInfo& frameInfo, VkDescriptorSet shadowDescriptorSet );
+            void renderGameObjects( FrameInfo& frameInfo, /*VkDescriptorSet shadowDescriptorSet,*/ VkDescriptorSet textureDescriptorSet);
 
         private:
-            void createPipelineLayout(VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSetLayout shadowSetLayout);
+            void createPipelineLayout(VkDescriptorSetLayout descriptorSetLayout, /*VkDescriptorSetLayout shadowSetLayout,*/ VkDescriptorSetLayout textureSetLayout);
             void createPipeline(VkRenderPass renderPass);
 
             VeDevice& veDevice;

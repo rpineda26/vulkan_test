@@ -165,14 +165,32 @@ namespace ve {
         subpass.preserveAttachmentCount = 0;
         subpass.pPreserveAttachments = nullptr;
         subpass.pResolveAttachments = nullptr;
+        // Use subpass dependencies for layout transitions
+		std::array<VkSubpassDependency, 2> dependencies;
+
+		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[0].dstSubpass = 0;
+		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+		dependencies[1].srcSubpass = 0;
+		dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[1].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
         VkRenderPassCreateInfo shadowPassInfo{};
         shadowPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         shadowPassInfo.attachmentCount = 1;
         shadowPassInfo.pAttachments = &shadowAttachment;
         shadowPassInfo.subpassCount = 1;
         shadowPassInfo.pSubpasses = &subpass;
-        shadowPassInfo.dependencyCount = 0;
-        shadowPassInfo.pDependencies = nullptr;
+        shadowPassInfo.dependencyCount =static_cast<uint32_t>(dependencies.size());
+        shadowPassInfo.pDependencies = dependencies.data();
         shadowPassInfo.flags = 0;
         if(vkCreateRenderPass(veDevice.device(), &shadowPassInfo, nullptr, &renderPass) != VK_SUCCESS){
             throw std::runtime_error("failed to create render pass!");
@@ -271,7 +289,7 @@ namespace ve {
         rasterizationState.rasterizerDiscardEnable = VK_FALSE;
         rasterizationState.polygonMode = VK_POLYGON_MODE_FILL;
         rasterizationState.lineWidth = 1.0f;
-        rasterizationState.cullMode = VK_CULL_MODE_FRONT_BIT; // Reduce self-shadowing artifacts
+        rasterizationState.cullMode = VK_CULL_MODE_NONE; // Reduce self-shadowing artifacts
         rasterizationState.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
         rasterizationState.depthBiasEnable = VK_TRUE;
         rasterizationState.depthBiasConstantFactor = 1.25f;
@@ -383,7 +401,7 @@ namespace ve {
             pipelineLayout,
             0,
             1,
-            &lightMatrixDescriptorSets[0],
+            &lightMatrixDescriptorSets[frameInfo.frameIndex],
             0,
             nullptr
         );

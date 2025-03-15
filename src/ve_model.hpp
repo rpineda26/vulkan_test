@@ -31,6 +31,7 @@ namespace ve{
             std::vector<Vertex> vertices;
             std::vector<uint32_t> indices;
             void loadModel(const std::string& filePath);
+            void loadModelGLTF(const std::string& filePath);
         };
 
         VeModel(VeDevice& device, const VeModel::Builder& builder);

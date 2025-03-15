@@ -61,7 +61,10 @@ if (NOT TINYOBJ_PATH)
   message(STATUS "TINYOBJ_PATH not specified in .env.cmake, using external/tinyobjloader")
   set(TINYOBJ_PATH external/tinyobjloader)
 endif()
- 
+if (NOT TINYGLTF_PATH)
+  message(STATUS "TINYGLTF_PATH not specified in .env.cmake, using external/tinygltf")
+  set(TINYGLTF_PATH external/tinygltf)
+endif()
 # If STB_PATH not specified in .env.cmake, try fetching from git repo
 if (NOT STB_PATH)
   message(STATUS "STB_PATH not specified in .env.cmake, using external/stb_image")
@@ -98,6 +101,7 @@ if (WIN32)
     ${PROJECT_SOURCE_DIR}/src
     ${Vulkan_INCLUDE_DIRS}
     ${TINYOBJ_PATH}
+    ${TINYGLTF_PATH}
     ${STB_PATH}
     ${IMGUI_PATH}
     ${GLFW_INCLUDE_DIRS}
@@ -116,6 +120,7 @@ elseif (APPLE)
   target_include_directories(${PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${TINYOBJ_PATH}
+    ${TINYGLTF_PATH}
     ${STB_PATH}
     ${IMGUI_PATH}
   )
@@ -125,6 +130,7 @@ elseif (UNIX)
     target_include_directories(${PROJECT_NAME} PUBLIC
       ${PROJECT_SOURCE_DIR}/src
       ${TINYOBJ_PATH}
+      ${TINYGLTF_PATH}
       ${STB_PATH}
       ${IMGUI_PATH}
     )

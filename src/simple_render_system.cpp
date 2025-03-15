@@ -21,9 +21,10 @@ namespace ve {
     SimpleRenderSystem::SimpleRenderSystem(
         VeDevice& device, VkRenderPass renderPass, 
         VkDescriptorSetLayout globalSetLayout,
-        VkDescriptorSetLayout shadowSetLayout
+        /*VkDescriptorSetLayout shadowSetLayout,*/
+        VkDescriptorSetLayout textureSetLayout
     ): veDevice{device} {
-        createPipelineLayout(globalSetLayout, shadowSetLayout);
+        createPipelineLayout(globalSetLayout, /*shadowSetLayout,*/ textureSetLayout);
         createPipeline(renderPass);
     }
     SimpleRenderSystem::~SimpleRenderSystem() {
@@ -31,19 +32,14 @@ namespace ve {
     }
 
 
-    void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout shadowSetLayout) {
+    void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout, /*VkDescriptorSetLayout shadowSetLayout,*/ VkDescriptorSetLayout textureSetLayout) {
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
         pushConstantRange.size = sizeof(SimplePushConstantData);
 
-        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout, shadowSetLayout};
-        if(descriptorSetLayouts.size() != 2){
-            throw std::runtime_error("Cannot create pipeline layout without descriptor set layouts");
-        }
-        if(globalSetLayout == VK_NULL_HANDLE || shadowSetLayout == VK_NULL_HANDLE){
-            throw std::runtime_error("Descriptor set layouts not bound");
-        }
+        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout, /*shadowSetLayout,*/ textureSetLayout};
+   
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
@@ -68,12 +64,10 @@ namespace ve {
     }
     
     
-    void SimpleRenderSystem::renderGameObjects(FrameInfo& frameInfo, VkDescriptorSet shadowDescriptorSet) {
+    void SimpleRenderSystem::renderGameObjects(FrameInfo& frameInfo, /*VkDescriptorSet shadowDescriptorSet,*/ VkDescriptorSet textureDescriptorSet) {
         vePipeline->bind(frameInfo.commandBuffer);
-        std::array<VkDescriptorSet, 2> descriptorSets = {frameInfo.descriptorSet, shadowDescriptorSet};
-        if(descriptorSets[0] == nullptr || descriptorSets[1] == nullptr){
-            throw std::runtime_error("Descriptor sets not bound");
-        }
+        std::array<VkDescriptorSet, 2> descriptorSets = {frameInfo.descriptorSet, /*shadowDescriptorSet,*/ textureDescriptorSet};
+ 
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,

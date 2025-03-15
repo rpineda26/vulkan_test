@@ -62,26 +62,30 @@ namespace ve {
         //bind descriptor set layout
         auto globalSetLayout = VeDescriptorSetLayout::Builder(veDevice)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 1)
+            .build();
+        auto textureSetLayout = VeDescriptorSetLayout::Builder(veDevice)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3)
             .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3)
             .addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3)
-            // .addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5)
             .build();
-
         //create global descriptor pool
         std::vector<VkDescriptorSet> globalDescriptorSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT);
         for(int i = 0; i < globalDescriptorSets.size(); i++){
             auto bufferInfo = uniformBuffers[i]->descriptorInfo();
             VeDescriptorWriter(*globalSetLayout, *globalPool)
                 .writeBuffer(0, &bufferInfo)
-                .writeImage(1, textureInfos.data(),3)
-                .writeImage(2, normalMapInfos.data(),3)
-                // .writeImage(3, specularMapInfos.data(),5)
                 .build(globalDescriptorSets[i]);
         }
+        VkDescriptorSet textureDescriptorSet;
+        VeDescriptorWriter(*textureSetLayout, *globalPool)
+            .writeImage(0, textureInfos.data(),3)
+            .writeImage(1, normalMapInfos.data(),3)
+            .writeImage(2, specularMapInfos.data(),3)
+            .build(textureDescriptorSet);
 
         //initialize render systems
-        ShadowRenderSystem shadowRenderSystem{veDevice, *globalPool };
-        SimpleRenderSystem simpleRenderSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout(), shadowRenderSystem.getDescriptorSetLayout() };
+        // ShadowRenderSystem shadowRenderSystem{veDevice, *globalPool };
+        SimpleRenderSystem simpleRenderSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout(), /*shadowRenderSystem.getDescriptorSetLayout(),*/ textureSetLayout->getDescriptorSetLayout() };
         PointLightSystem pointLightSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
         OutlineHighlightSystem outlineHighlightSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
         //create camera
@@ -141,17 +145,17 @@ namespace ve {
                 uniformBuffers[frameIndex]->writeToBuffer(&globalUbo);
                 uniformBuffers[frameIndex]->flush();
                 //render shadow maps
-                for(int i =0; i <numLights; i ++){
-                    //update shadow render system
-                    shadowRenderSystem.updateLightSpaceMatrices(frameInfo, i);
-                    //render
-                    veRenderer.beginShadowRenderPass(commandBuffer, shadowRenderSystem, frameIndex * 10 + i);
-                    shadowRenderSystem.renderGameObjects(frameInfo, i);
-                    veRenderer.endShadowRenderPass(commandBuffer, shadowRenderSystem, i);
-                }
+                // for(int i =0; i <numLights; i ++){
+                //     //update shadow render system
+                //     shadowRenderSystem.updateLightSpaceMatrices(frameInfo, i);
+                //     //render
+                //     veRenderer.beginShadowRenderPass(commandBuffer, shadowRenderSystem, frameIndex * 10 + i);
+                //     shadowRenderSystem.renderGameObjects(frameInfo, i);
+                //     veRenderer.endShadowRenderPass(commandBuffer, shadowRenderSystem, i);
+                // }
                 //render scene
                 veRenderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(frameInfo, shadowRenderSystem.getShadowDescriptorSet(frameIndex));
+                simpleRenderSystem.renderGameObjects(frameInfo, /*shadowRenderSystem.getShadowDescriptorSet(frameIndex),*/ textureDescriptorSet);
                 pointLightSystem.render(frameInfo);
                 if(showOutlignHighlight)
                     outlineHighlightSystem.renderGameObjects(frameInfo);
@@ -170,11 +174,11 @@ namespace ve {
         vase.setTextureIndex(0);
         vase.setNormalIndex(0);
         vase.setSpecularIndex(0);
-        vase.model = preLoadedModels["smooth_vase"];
+        vase.model = preLoadedModels["Cute_Demon"];
         vase.transform.translation = {0.5f, 0.5f, 0.0f};
-        vase.transform.scale = {3.0f, 1.0f, 3.0f};
+        // vase.transform.scale = {3.0f, 1.0f, 3.0f};
         // vase.color = {128.0f, 228.1f, 229.1f}; //cyan
-        vase.setTitle("Vase");
+        vase.setTitle("Cute_Demon");
         gameObjects.emplace(vase.getId(),std::move(vase));
         //vase
         auto cube = VeGameObject::createGameObject();
@@ -223,9 +227,9 @@ namespace ve {
         specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/brick_specular.png"));
         specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/metal_specular.tga"));
         specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wood_specular.png"));
-        specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wall_gray_specular.png"));
-        specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/tile_specular.png"));
-        // specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/stone_specular.png"));
+        // specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wall_gray_specular.png"));
+        // specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/tile_specular.png"));
+        // // specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/stone_specular.png"));
         //get image infos
         for(int i = 0; i < textures.size(); i++){
             VkDescriptorImageInfo imageInfo{};
