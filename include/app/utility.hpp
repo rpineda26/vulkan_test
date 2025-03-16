@@ -29,12 +29,12 @@ namespace ve{
     };
     inline std::unordered_map<std::string, std::shared_ptr<VeModel>> preLoadedModels;
     inline void preLoadModels(VeDevice& veDevice){
-        preLoadedModels["cube"] = VeModel::createModelFromFile(veDevice, "models/cube.obj");
-        preLoadedModels["quad"] = VeModel::createModelFromFile(veDevice, "models/quad.obj");
-        preLoadedModels["flat_vase"] = VeModel::createModelFromFile(veDevice, "models/flat_vase.obj");
-        preLoadedModels["smooth_vase"] = VeModel::createModelFromFile(veDevice, "models/smooth_vase.obj");
-        preLoadedModels["colored_cube"] = VeModel::createModelFromFile(veDevice, "models/colored_cube.obj");
-        preLoadedModels["Cute_Demon"] = VeModel::createModelFromFile(veDevice, "models/Cute_Demon.glb");
+        preLoadedModels["cube"] = VeModel::createModelFromFile(veDevice, "assets/models/cube.obj");
+        preLoadedModels["quad"] = VeModel::createModelFromFile(veDevice, "assets/models/quad.obj");
+        preLoadedModels["flat_vase"] = VeModel::createModelFromFile(veDevice, "assets/models/flat_vase.obj");
+        preLoadedModels["smooth_vase"] = VeModel::createModelFromFile(veDevice, "assets/models/smooth_vase.obj");
+        preLoadedModels["colored_cube"] = VeModel::createModelFromFile(veDevice, "assets/models/colored_cube.obj");
+        preLoadedModels["Cute_Demon"] = VeModel::createModelFromFile(veDevice, "assets/models/Cute_Demon.glb");
     }
     inline void cleanupPreloadedModels() {
     for (auto& [key, model] : preLoadedModels) {

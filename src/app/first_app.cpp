@@ -210,26 +210,26 @@ namespace ve {
         gameObjects.emplace(light.getId(),std::move(light));
     }
     void FirstApp::loadTextures(){
-        textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/brick_texture.png"));
-        textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/metal.tga"));
-        textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/wood.png"));
-        // textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/wall_gray.png"));
-        // textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/tile.png"));
-        // textures.push_back(std::make_unique<VeTexture>(veDevice, "textures/stone.png"));
+        textures.push_back(std::make_unique<VeTexture>(veDevice, "assets/textures/brick_texture.png"));
+        textures.push_back(std::make_unique<VeTexture>(veDevice, "assets/textures/metal.tga"));
+        textures.push_back(std::make_unique<VeTexture>(veDevice, "assets/textures/wood.png"));
+        // textures.push_back(std::make_unique<VeTexture>(veDevice, "assets/textures/wall_gray.png"));
+        // textures.push_back(std::make_unique<VeTexture>(veDevice, "assets/textures/tile.png"));
+        // textures.push_back(std::make_unique<VeTexture>(veDevice, "assets/textures/stone.png"));
         //normal maps
-        normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/brick_normal.png"));
-        normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/metal_normal.tga"));
-        normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wood_normal.png"));
-        // normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wall_gray_normal.png"));
-        // normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/tile_normal.png"));
-        // normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/stone_normal.png"));
+        normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "assets/textures/brick_normal.png"));
+        normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "assets/textures/metal_normal.tga"));
+        normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "assets/textures/wood_normal.png"));
+        // normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "assets/textures/wall_gray_normal.png"));
+        // normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "assets/textures/tile_normal.png"));
+        // normalMaps.push_back(std::make_unique<VeNormal>(veDevice, "assets/textures/stone_normal.png"));
         //specular maps
-        specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/brick_specular.png"));
-        specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/metal_specular.tga"));
-        specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wood_specular.png"));
-        // specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/wall_gray_specular.png"));
-        // specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/tile_specular.png"));
-        // // specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "textures/stone_specular.png"));
+        specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "assets/textures/brick_specular.png"));
+        specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "assets/textures/metal_specular.tga"));
+        specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "assets/textures/wood_specular.png"));
+        // specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "assets/textures/wall_gray_specular.png"));
+        // specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "assets/textures/tile_specular.png"));
+        // // specularMaps.push_back(std::make_unique<VeNormal>(veDevice, "assets/textures/stone_specular.png"));
         //get image infos
         for(int i = 0; i < textures.size(); i++){
             VkDescriptorImageInfo imageInfo{};
