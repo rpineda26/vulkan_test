@@ -2,7 +2,7 @@
 #include "ve_camera.hpp"
 #include "input_controller.hpp"
 #include "buffer.hpp"
-#include "simple_render_system.hpp"
+#include "pbr_render_system.hpp"
 #include "point_light_system.hpp"
 #include "outline_highlight_system.hpp"
 #include "shadow_render_system.hpp"
@@ -85,7 +85,7 @@ namespace ve {
 
         //initialize render systems
         // ShadowRenderSystem shadowRenderSystem{veDevice, *globalPool };
-        SimpleRenderSystem simpleRenderSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout(), /*shadowRenderSystem.getDescriptorSetLayout(),*/ textureSetLayout->getDescriptorSetLayout() };
+        PbrRenderSystem pbrRenderSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout(), /*shadowRenderSystem.getDescriptorSetLayout(),*/ textureSetLayout->getDescriptorSetLayout() };
         PointLightSystem pointLightSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
         OutlineHighlightSystem outlineHighlightSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
         //create camera
@@ -155,7 +155,7 @@ namespace ve {
                 // }
                 //render scene
                 veRenderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(frameInfo, /*shadowRenderSystem.getShadowDescriptorSet(frameIndex),*/ textureDescriptorSet);
+                pbrRenderSystem.renderGameObjects(frameInfo, /*shadowRenderSystem.getShadowDescriptorSet(frameIndex),*/ textureDescriptorSet);
                 pointLightSystem.render(frameInfo);
                 if(showOutlignHighlight)
                     outlineHighlightSystem.renderGameObjects(frameInfo);

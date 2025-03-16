@@ -9,12 +9,12 @@
 #include <memory>
 #include <vector>
 namespace ve {
-    class SimpleRenderSystem{
+    class PbrRenderSystem{
         public:
-            SimpleRenderSystem(VeDevice& device, VkRenderPass renderPass ,VkDescriptorSetLayout descriptorSetLayout, /*VkDescriptorSetLayout shadowSetLayout,*/ VkDescriptorSetLayout textureSetLayout);    
-            ~SimpleRenderSystem();
-            SimpleRenderSystem(const SimpleRenderSystem&) = delete;
-            SimpleRenderSystem& operator=(const SimpleRenderSystem&) = delete;
+            PbrRenderSystem(VeDevice& device, VkRenderPass renderPass ,VkDescriptorSetLayout descriptorSetLayout, /*VkDescriptorSetLayout shadowSetLayout,*/ VkDescriptorSetLayout textureSetLayout);    
+            ~PbrRenderSystem();
+            PbrRenderSystem(const PbrRenderSystem&) = delete;
+            PbrRenderSystem& operator=(const PbrRenderSystem&) = delete;
             void renderGameObjects( FrameInfo& frameInfo, /*VkDescriptorSet shadowDescriptorSet,*/ VkDescriptorSet textureDescriptorSet);
 
         private:

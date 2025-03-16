@@ -1,4 +1,4 @@
-#include "simple_render_system.hpp"
+#include "pbr_render_system.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <cassert>
 namespace ve {
-    struct SimplePushConstantData {
+    struct PbrPushConstantData {
         glm::mat4 modelMatrix{1.0f};
         glm::mat4 normalMatrix{1.0f};
         uint32_t textureIndex{0};
@@ -18,7 +18,7 @@ namespace ve {
         glm::vec3 baseColor{1.0f};
     };
 
-    SimpleRenderSystem::SimpleRenderSystem(
+    PbrRenderSystem::PbrRenderSystem(
         VeDevice& device, VkRenderPass renderPass, 
         VkDescriptorSetLayout globalSetLayout,
         /*VkDescriptorSetLayout shadowSetLayout,*/
@@ -27,16 +27,16 @@ namespace ve {
         createPipelineLayout(globalSetLayout, /*shadowSetLayout,*/ textureSetLayout);
         createPipeline(renderPass);
     }
-    SimpleRenderSystem::~SimpleRenderSystem() {
+    PbrRenderSystem::~PbrRenderSystem() {
         vkDestroyPipelineLayout(veDevice.device(), pipelineLayout, nullptr);
     }
 
 
-    void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout, /*VkDescriptorSetLayout shadowSetLayout,*/ VkDescriptorSetLayout textureSetLayout) {
+    void PbrRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout, /*VkDescriptorSetLayout shadowSetLayout,*/ VkDescriptorSetLayout textureSetLayout) {
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
-        pushConstantRange.size = sizeof(SimplePushConstantData);
+        pushConstantRange.size = sizeof(PbrPushConstantData);
 
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout, /*shadowSetLayout,*/ textureSetLayout};
    
@@ -50,7 +50,7 @@ namespace ve {
             throw std::runtime_error("failed to create pipeline layout!");
         }
     }
-    void SimpleRenderSystem::createPipeline(VkRenderPass renderPass) {
+    void PbrRenderSystem::createPipeline(VkRenderPass renderPass) {
         assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
         PipelineConfigInfo pipelineConfig{};
         VePipeline::defaultPipelineConfigInfo(pipelineConfig);
@@ -58,13 +58,13 @@ namespace ve {
         pipelineConfig.pipelineLayout = pipelineLayout;
         vePipeline = std::make_unique<VePipeline>(
             veDevice,
-            "shaders/simple_shader.vert.spv",
-            "shaders/simple_shader.frag.spv",
+            "shaders/pbr_shader.vert.spv",
+            "shaders/pbr_shader.frag.spv",
             pipelineConfig);
     }
     
     
-    void SimpleRenderSystem::renderGameObjects(FrameInfo& frameInfo, /*VkDescriptorSet shadowDescriptorSet,*/ VkDescriptorSet textureDescriptorSet) {
+    void PbrRenderSystem::renderGameObjects(FrameInfo& frameInfo, /*VkDescriptorSet shadowDescriptorSet,*/ VkDescriptorSet textureDescriptorSet) {
         vePipeline->bind(frameInfo.commandBuffer);
         std::array<VkDescriptorSet, 2> descriptorSets = {frameInfo.descriptorSet, /*shadowDescriptorSet,*/ textureDescriptorSet};
  
@@ -81,7 +81,7 @@ namespace ve {
         for(auto& key_value : frameInfo.gameObjects){
             auto& obj = key_value.second;
             if(obj.lightComponent == nullptr){
-                SimplePushConstantData push{};
+                PbrPushConstantData push{};
                 push.modelMatrix =  obj.transform.mat4();
                 push.normalMatrix = obj.transform.normalMatrix();
                 push.textureIndex = obj.getTextureIndex();
@@ -95,7 +95,7 @@ namespace ve {
                     pipelineLayout,
                     VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                     0,
-                    sizeof(SimplePushConstantData),
+                    sizeof(PbrPushConstantData),
                     &push
                 );
                 obj.model->bind(frameInfo.commandBuffer);
