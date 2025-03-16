@@ -81,6 +81,18 @@ file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 file(GLOB_RECURSE IMGUI_SOURCES ${IMGUI_PATH}/*.cpp)
 add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SOURCES})
  
+file(GLOB_RECURSE SRC_SUBDIRS LIST_DIRECTORIES true ${PROJECT_SOURCE_DIR}/include/*)
+set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include) # Ensure src/ itself is included
+
+foreach(dir ${SRC_SUBDIRS})
+    if (IS_DIRECTORY ${dir})
+        list(APPEND INCLUDE_DIRS ${dir})
+    endif()
+endforeach()
+
+# Ensure debug output to check included directories
+message(STATUS "Include directories: ${INCLUDE_DIRS}")
+
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
  
 set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
@@ -98,7 +110,7 @@ if (WIN32)
   endif()
  
   target_include_directories(${PROJECT_NAME} PUBLIC
-    ${PROJECT_SOURCE_DIR}/src
+    ${INCLUDE_DIRS}
     ${Vulkan_INCLUDE_DIRS}
     ${TINYOBJ_PATH}
     ${TINYGLTF_PATH}
@@ -118,7 +130,7 @@ elseif (APPLE)
   message(STATUS "CREATING BUILD FOR MACOS")
   add_definitions(-DMACOS)  # Define MACOS macro when building for macOS
   target_include_directories(${PROJECT_NAME} PUBLIC
-    ${PROJECT_SOURCE_DIR}/src
+    ${INCLUDE_DIRS}
     ${TINYOBJ_PATH}
     ${TINYGLTF_PATH}
     ${STB_PATH}
@@ -128,7 +140,7 @@ elseif (APPLE)
 elseif (UNIX)
     message(STATUS "CREATING BUILD FOR UNIX")
     target_include_directories(${PROJECT_NAME} PUBLIC
-      ${PROJECT_SOURCE_DIR}/src
+      ${INCLUDE_DIRS}
       ${TINYOBJ_PATH}
       ${TINYGLTF_PATH}
       ${STB_PATH}
