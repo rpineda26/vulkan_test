@@ -11,14 +11,14 @@
 namespace ve {
     class PbrRenderSystem{
         public:
-            PbrRenderSystem(VeDevice& device, VkRenderPass renderPass ,VkDescriptorSetLayout descriptorSetLayout, /*VkDescriptorSetLayout shadowSetLayout,*/ VkDescriptorSetLayout textureSetLayout);    
+            PbrRenderSystem(VeDevice& device, VkRenderPass renderPass, const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts);    
             ~PbrRenderSystem();
             PbrRenderSystem(const PbrRenderSystem&) = delete;
             PbrRenderSystem& operator=(const PbrRenderSystem&) = delete;
-            void renderGameObjects( FrameInfo& frameInfo, /*VkDescriptorSet shadowDescriptorSet,*/ VkDescriptorSet textureDescriptorSet);
+            void renderGameObjects( FrameInfo& frameInfo, /*VkDescriptorSet shadowDescriptorSet,*/const std::vector<VkDescriptorSet>& descriptorSets);
 
         private:
-            void createPipelineLayout(VkDescriptorSetLayout descriptorSetLayout, /*VkDescriptorSetLayout shadowSetLayout,*/ VkDescriptorSetLayout textureSetLayout);
+            void createPipelineLayout(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts);
             void createPipeline(VkRenderPass renderPass);
 
             VeDevice& veDevice;

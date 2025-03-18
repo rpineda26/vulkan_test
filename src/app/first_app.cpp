@@ -59,16 +59,25 @@ namespace ve {
             );
             uniformBuffers[i]->map();
         }
-        //bind descriptor set layout
+
+        //create descriptor set layout
+        //global ubo descriptor layout
         auto globalSetLayout = VeDescriptorSetLayout::Builder(veDevice)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 1)
             .build();
+        //texture descriptor layout
         auto textureSetLayout = VeDescriptorSetLayout::Builder(veDevice)
             .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3)
             .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3)
             .addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3)
             .build();
-        //create global descriptor pool
+        //animation descriptor layout
+        auto animationSetLayout = VeDescriptorSetLayout::Builder(veDevice)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 1)
+            .build();
+        
+        //create descriptor pools
+        //global ubo descriptor pool
         std::vector<VkDescriptorSet> globalDescriptorSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT);
         for(int i = 0; i < globalDescriptorSets.size(); i++){
             auto bufferInfo = uniformBuffers[i]->descriptorInfo();
@@ -76,16 +85,23 @@ namespace ve {
                 .writeBuffer(0, &bufferInfo)
                 .build(globalDescriptorSets[i]);
         }
+        //texture descriptor pool
         VkDescriptorSet textureDescriptorSet;
         VeDescriptorWriter(*textureSetLayout, *globalPool)
             .writeImage(0, textureInfos.data(),3)
             .writeImage(1, normalMapInfos.data(),3)
             .writeImage(2, specularMapInfos.data(),3)
             .build(textureDescriptorSet);
-
+        //animation descriptor pool
+        VkDescriptorSet animationDescriptorSet;
+        auto bufferInfo = gameObjects.at(0).model->shaderJointsBuffer->descriptorInfo();
+        VeDescriptorWriter(*animationSetLayout, *globalPool)
+            .writeBuffer(0,&bufferInfo)
+            .build(animationDescriptorSet);
+        
         //initialize render systems
         // ShadowRenderSystem shadowRenderSystem{veDevice, *globalPool };
-        PbrRenderSystem pbrRenderSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout(), /*shadowRenderSystem.getDescriptorSetLayout(),*/ textureSetLayout->getDescriptorSetLayout() };
+        PbrRenderSystem pbrRenderSystem{veDevice, veRenderer.getSwapChainRenderPass(), {globalSetLayout->getDescriptorSetLayout(), textureSetLayout->getDescriptorSetLayout(), animationSetLayout->getDescriptorSetLayout()/*, shadowRenderSystem.getDescriptorSetLayout()*/ } };
         PointLightSystem pointLightSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
         OutlineHighlightSystem outlineHighlightSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
         //create camera
@@ -105,6 +121,7 @@ namespace ve {
         VeImGui::createImGuiContext(veDevice, veWindow, imGuiPool, renderPass, VeSwapChain::MAX_FRAMES_IN_FLIGHT);
         int numLights = getNumLights();
         bool showOutlignHighlight = true;
+        int frameCount = 0;
         //main loop
         while (!veWindow.shouldClose()) {
             glfwPollEvents();
@@ -131,7 +148,7 @@ namespace ve {
                 VeImGui::initializeImGuiFrame();
                 numLights = getNumLights();
                 sceneEditor.drawSceneEditor(gameObjects, selectedObject, viewerObject, numLights, showOutlignHighlight);
-
+                //record frame data
                 int frameIndex = veRenderer.getFrameIndex();
                 FrameInfo frameInfo{frameIndex, frameTime, elapsedTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects, selectedObject, numLights, showOutlignHighlight};
                 //update global UBO
@@ -144,6 +161,9 @@ namespace ve {
                 pointLightSystem.update(frameInfo, globalUbo);
                 uniformBuffers[frameIndex]->writeToBuffer(&globalUbo);
                 uniformBuffers[frameIndex]->flush();
+                //update animation
+                gameObjects.at(0).model->updateAnimation(frameTime, frameCount);
+
                 //render shadow maps
                 // for(int i =0; i <numLights; i ++){
                 //     //update shadow render system
@@ -153,9 +173,10 @@ namespace ve {
                 //     shadowRenderSystem.renderGameObjects(frameInfo, i);
                 //     veRenderer.endShadowRenderPass(commandBuffer, shadowRenderSystem, i);
                 // }
+
                 //render scene
                 veRenderer.beginSwapChainRenderPass(commandBuffer);
-                pbrRenderSystem.renderGameObjects(frameInfo, /*shadowRenderSystem.getShadowDescriptorSet(frameIndex),*/ textureDescriptorSet);
+                pbrRenderSystem.renderGameObjects(frameInfo, /*shadowRenderSystem.getShadowDescriptorSet(frameIndex),*/ {globalDescriptorSets[frameIndex], textureDescriptorSet, animationDescriptorSet});
                 pointLightSystem.render(frameInfo);
                 if(showOutlignHighlight)
                     outlineHighlightSystem.renderGameObjects(frameInfo);
@@ -163,6 +184,7 @@ namespace ve {
                 veRenderer.endSwapChainRenderPass(commandBuffer);
                 veRenderer.endFrame();
             }
+            frameCount++;
         }
         vkDeviceWaitIdle(veDevice.device()); //cpu wait for gpu to finish
         VeImGui::cleanUpImGui();

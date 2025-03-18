@@ -1,10 +1,10 @@
 #include "ve_model.hpp"
+#include  "buffer.hpp"
 #include "utility.hpp"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
-#include <tiny_gltf.h>
 #include <cassert>
 #include <cstring>
 #include <unordered_map>
@@ -83,6 +83,26 @@ namespace ve{
             vkCmdDraw(commandBuffer, vertexCount, instanceCount, 0, 0);
         }
     }
+    void VeModel::updateAnimation(float deltaTime, int frameCounter){
+        if(hasAnimation){
+            animationManager->update(deltaTime, *skeleton, frameCounter);
+            skeleton->update();
+            //update buffer
+            shaderJointsBuffer->writeToBuffer(skeleton->jointMatrices.data());
+            shaderJointsBuffer->flush();
+            std::cout << "Animation updated" << std::endl;
+            for (size_t i = 0; i < 1; ++i) {
+                std::cout << "Matrix " << i << ":" << std::endl;
+                for (int row = 0; row < 4; row++) {
+                    for (int col = 0; col < 4; col++) {
+                        std::cout << skeleton->jointMatrices[6][col][row] << " ";
+                    }
+                    std::cout << std::endl;
+                }
+                std::cout << std::endl;
+            }      
+        }
+    }
     std::vector<VkVertexInputBindingDescription> VeModel::Vertex::getBindingDescriptions(){
         std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
         bindingDescriptions[0].binding = 0;
@@ -97,7 +117,7 @@ namespace ve{
         attributeDescriptions.push_back({2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)});
         attributeDescriptions.push_back({3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)});
         attributeDescriptions.push_back({4, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent)});
-        attributeDescriptions.push_back({5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, jointIndices)});
+        attributeDescriptions.push_back({5, 0, VK_FORMAT_R32G32B32A32_SINT, offsetof(Vertex, jointIndices)});
         attributeDescriptions.push_back({6, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, jointWeights)});
         return attributeDescriptions;
     }
@@ -112,7 +132,12 @@ namespace ve{
             builder.loadModel(filePath);
         }
         
-        return std::make_unique<VeModel>(device, builder);
+        auto model = std::make_unique<VeModel>(device, builder);
+        if(extension == "gltf" || extension == "glb"){
+            model->loadSkeleton(builder.model);
+            model->loadAnimations(builder.model);
+        }
+        return model;
     }
     void VeModel::Builder::loadModel(const std::string& filePath){
         tinyobj::attrib_t attrib;
@@ -156,6 +181,8 @@ namespace ve{
                         attrib.texcoords[2 * index.texcoord_index + 1],
                     };     
                 }
+                vertex.jointIndices = glm::ivec4(0);
+                vertex.jointWeights = glm::vec4(1.0f,0.0f,0.0f,0.0f);
     
                 //if vertex is unique, add to list
                 if(uniqueVertices.count(vertex) == 0){
@@ -187,7 +214,6 @@ namespace ve{
         }
     }
     void VeModel::Builder::loadModelGLTF(const std::string& filePath){
-        tinygltf::Model model;
         tinygltf::TinyGLTF loader;
         std::string err;
         std::string warn;
@@ -439,6 +465,7 @@ namespace ve{
                             // If no weights, assign fully to the first joint
                             tempVertices[i].jointWeights = { 1.0f, 0.0f, 0.0f, 0.0f };
                         }
+                        // std::cout << "Joint Weights: " << tempVertices[i].jointWeights.x << " " << tempVertices[i].jointWeights.y << " " << tempVertices[i].jointWeights.z << " " << tempVertices[i].jointWeights.w << std::endl;
                     }
                 }
                 // Load indices
@@ -498,6 +525,194 @@ namespace ve{
                 vertices[indices[i + 2]].tangent = tangent;
             }
         }
+    }
+    void VeModel::loadSkeleton(const tinygltf::Model& model){
+        size_t numSkeletons = model.skins.size();
+        if(!numSkeletons)
+            return;
+
+        skeleton = std::make_unique<Skeleton>();
+        
+        tinygltf::Skin skin = model.skins[0];
+        if(skin.inverseBindMatrices!=-1){
+            auto& joints = skeleton -> joints; 
+            size_t numJoints = skin.joints.size();
+            joints.resize(numJoints);
+            skeleton->name=skin.name;
+            skeleton->jointMatrices.resize(numJoints);
+            // std::cout << "Skeleton: " << skin.name << std::endl;
+            
+            const tinygltf::Accessor& invAccessor = model.accessors[skin.inverseBindMatrices];
+            const tinygltf::BufferView& invBufferView = model.bufferViews[invAccessor.bufferView];
+            const tinygltf::Buffer& invBuffer = model.buffers[invBufferView.buffer];
+            const float* inverseBindMatricesData = reinterpret_cast<const float*>(
+                &invBuffer.data[invBufferView.byteOffset + invAccessor.byteOffset]);
+            
+            // Process each joint
+            for (size_t i = 0; i < numJoints; i++) {
+                int jointNodeIdx = skin.joints[i];
+                
+                // Setup joint data
+                joints[i].name = model.nodes[jointNodeIdx].name;
+                skeleton->nodeJointMap[jointNodeIdx] = i;
+            
+                // Get the inverse bind matrix for this joint
+                glm::mat4 inverseBindMatrix(1.0f);
+                memcpy(&inverseBindMatrix, &inverseBindMatricesData[i * 16], sizeof(glm::mat4));
+                joints[i].inverseBindMatrix = inverseBindMatrix;
+            }
+            int rootJoint = skin.joints[0];
+            loadJoints(rootJoint, -1, model);
+        }
+        uint32_t numJoints = static_cast<uint32_t>(skeleton->joints.size());
+        uint32_t jointSize = static_cast<uint32_t>(sizeof(glm::mat4));
+        
+        
+        shaderJointsBuffer = std::make_unique<VeBuffer>(veDevice, sizeof(glm::mat4), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+                                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, veDevice.properties.limits.minUniformBufferOffsetAlignment);
+        shaderJointsBuffer->map();
+    }
+    void VeModel::loadJoints(int nodeIndex, int parentIndex, const tinygltf::Model& model){
+        int currentJoint = skeleton->nodeJointMap[nodeIndex];
+        auto& joint = skeleton->joints[currentJoint];
+        joint.parentIndex = parentIndex;
+        size_t numChildren = model.nodes[nodeIndex].children.size();
+        if(numChildren>0){
+            joint.childrenIndices.resize(numChildren);
+            for(size_t i = 0; i < numChildren; i++){
+                int childNodeIndex = model.nodes[nodeIndex].children[i];
+                joint.childrenIndices[i] = skeleton->nodeJointMap[childNodeIndex];
+                loadJoints(childNodeIndex, currentJoint, model);
+            }
+        }
+    }
+    void VeModel::loadAnimations(const tinygltf::Model& model){
+        if(!skeleton)
+            return;
+        size_t numAnimations = model.animations.size();
+        if(!numAnimations)
+            return;
+        animationManager = std::make_shared<AnimationManager>();
+        for(size_t i = 0; i < numAnimations; i++){
+            const tinygltf::Animation& animation = model.animations[i];
+            std::string name = animation.name.empty() ? "animation" + std::to_string(i) : animation.name;
+            std::shared_ptr<Animation> anim = std::make_shared<Animation>(name);
+            //samplers
+            size_t numSamplers = animation.samplers.size();
+            anim->samplers.resize(numSamplers);
+            for(size_t samplerIndex = 0; samplerIndex < numSamplers; samplerIndex++) {
+                tinygltf::AnimationSampler gltfSampler = animation.samplers[samplerIndex];
+                auto& sampler = anim->samplers[samplerIndex];
+                sampler.interpolationMethod = Animation::InterpolationMethod::LINEAR;
+                if(gltfSampler.interpolation == "STEP")
+                    sampler.interpolationMethod = Animation::InterpolationMethod::STEP;
+                
+                // Process input timestamps
+                const tinygltf::Accessor& inputAccessor = model.accessors[gltfSampler.input];
+                const tinygltf::BufferView& inputBufferView = model.bufferViews[inputAccessor.bufferView];
+                const tinygltf::Buffer& inputBuffer = model.buffers[inputBufferView.buffer];
+                
+                size_t count = inputAccessor.count;
+                sampler.timeStamps.resize(count);
+                
+                // Get byte stride
+                size_t inputByteStride = inputBufferView.byteStride;
+                if (inputByteStride == 0) {
+                    // If byteStride is not defined, calculate it based on the accessor's type and component type
+                    inputByteStride = tinygltf::GetComponentSizeInBytes(inputAccessor.componentType) * 
+                                    tinygltf::GetNumComponentsInType(TINYGLTF_TYPE_SCALAR);
+                }
+                
+                // Get buffer data pointer
+                const unsigned char* inputBufferData = &inputBuffer.data[inputBufferView.byteOffset + 
+                                                    inputAccessor.byteOffset];
+                
+                if (inputAccessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT) {
+                    for (size_t i = 0; i < count; i++) {
+                        const float* value = reinterpret_cast<const float*>(inputBufferData + i * inputByteStride);
+                        sampler.timeStamps[i] = *value;
+                    }
+                } else {
+                    std::cout << "Error: Animation sampler input component type not supported" << std::endl;
+                }
+                
+                // Process output values
+                const tinygltf::Accessor& outputAccessor = model.accessors[gltfSampler.output];
+                const tinygltf::BufferView& outputBufferView = model.bufferViews[outputAccessor.bufferView];
+                const tinygltf::Buffer& outputBuffer = model.buffers[outputBufferView.buffer];
+                
+                count = outputAccessor.count;
+                sampler.TRSoutputValues.resize(count);
+                    
+                // Get byte stride
+                size_t outputByteStride = outputBufferView.byteStride;
+                if (outputByteStride == 0) {
+                    // If byteStride is not defined, calculate it based on the accessor's type and component type
+                    outputByteStride = tinygltf::GetComponentSizeInBytes(outputAccessor.componentType) * 
+                                    tinygltf::GetNumComponentsInType(outputAccessor.type);
+                }
+                
+                // Get buffer data pointer
+                const unsigned char* outputBufferData = &outputBuffer.data[outputBufferView.byteOffset + 
+                                                        outputAccessor.byteOffset];
+                
+                switch (outputAccessor.type) {
+                    case TINYGLTF_TYPE_VEC3:
+                    {
+                        for (size_t i = 0; i < count; i++) {
+                            const float* value = reinterpret_cast<const float*>(outputBufferData + i * outputByteStride);
+                            sampler.TRSoutputValues[i] = glm::vec4(value[0], value[1], value[2], 0.0f);
+                        }
+                        break;
+                    }
+                    case TINYGLTF_TYPE_VEC4:
+                    {
+                        for (size_t i = 0; i < count; i++) {
+                            const float* value = reinterpret_cast<const float*>(outputBufferData + i * outputByteStride);
+                            sampler.TRSoutputValues[i] = glm::vec4(value[0], value[1], value[2], value[3]);
+                        }
+                        break;
+                    }
+                    default:
+                    {
+                        std::cout << "Error: Animation sampler output type not supported" << std::endl;
+                        break;
+                    }
+                }
+            }
+            
+      
+            //atleast one samplers exist
+            if (anim->samplers.size()){
+                auto& sampler = anim->samplers[0];
+                //interpolate between two or more time stamps
+                if(sampler.timeStamps.size() >=2){
+                    anim->setFirstKeyFrameTime(sampler.timeStamps[0]);
+                    anim->setLastKeyFrameTime(sampler.timeStamps.back());
+                }
+            }
+            //each node of the skeleton has channels that point to a sampler
+            size_t numChannels = animation.channels.size();
+            anim->channels.resize(numChannels);
+            for(size_t channelIndex = 0; channelIndex < numChannels; channelIndex++){
+                tinygltf::AnimationChannel gltfChannel = animation.channels[channelIndex];
+                auto& channel = anim->channels[channelIndex];
+                channel.node = skeleton->nodeJointMap[gltfChannel.target_node];
+                channel.samplerIndex = gltfChannel.sampler;
+                if(gltfChannel.target_path == "translation"){
+                    channel.pathType = Animation::PathType::TRANSLATION;
+                }else if(gltfChannel.target_path == "rotation"){
+                    channel.pathType = Animation::PathType::ROTATION;
+                }else if(gltfChannel.target_path == "scale"){
+                    channel.pathType = Animation::PathType::SCALE;
+                }else{
+                    std::cout << "Error: Animation channel target path not supported" << std::endl;
+                }
+            }
+            animationManager->push(anim);
+        }
+        hasAnimation = (animationManager->size()) ? true : false;
+
     }
 
 

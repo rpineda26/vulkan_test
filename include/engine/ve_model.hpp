@@ -1,6 +1,11 @@
 #pragma once
+
 #include "ve_device.hpp"
+#include "skeleton.hpp"
+#include "animation_manager.hpp"
 #include "buffer.hpp"
+
+#include <tiny_gltf.h>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
@@ -13,6 +18,7 @@
 #endif
 
 namespace ve{
+
     class VeModel{
     public:
         struct Vertex{
@@ -21,8 +27,8 @@ namespace ve{
             glm::vec3 normal;
             glm::vec2 uv;
             glm::vec3 tangent;
-            glm::vec4 jointIndices = glm::vec4(1.0f);
-            glm::vec4 jointWeights = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+            glm::ivec4 jointIndices;
+            glm::vec4 jointWeights;
 
             static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
             static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
@@ -39,6 +45,7 @@ namespace ve{
         struct Builder{
             std::vector<Vertex> vertices;
             std::vector<uint32_t> indices;
+            tinygltf::Model model;
             void loadModel(const std::string& filePath);
             void loadModelGLTF(const std::string& filePath);
         };
@@ -52,10 +59,19 @@ namespace ve{
         void bind(VkCommandBuffer commandBuffer);
         void draw(VkCommandBuffer commandBuffer);
         void drawInstanced(VkCommandBuffer commandBuffer, uint32_t instanceCount);
+        void updateAnimation(float deltaTime, int frameCounter);
+        AnimationManager& getAnimationManager() { return *animationManager.get(); }
+
+        std::unique_ptr<Skeleton> skeleton;
+        std::shared_ptr<AnimationManager> animationManager;
+        std::unique_ptr<VeBuffer> shaderJointsBuffer;
 
     private:
         void createVertexBuffers(const std::vector<Vertex>& vertices);
         void createIndexBuffers(const std::vector<uint32_t>& indices);  
+        void loadSkeleton(const tinygltf::Model& model);
+        void loadAnimations(const tinygltf::Model& model);
+        void loadJoints(int nodeIndex, int parentIndex, const tinygltf::Model& model);
         //attributes
         VeDevice& veDevice;
         //vertex buffer
@@ -65,6 +81,7 @@ namespace ve{
         bool hasIndexBuffer{false};
         std::unique_ptr<VeBuffer> indexBuffer;
         uint32_t indexCount;
-
+        //animation data
+        bool hasAnimation{false};
     };
 }
