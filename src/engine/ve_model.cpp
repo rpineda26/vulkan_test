@@ -1,5 +1,6 @@
 #include "ve_model.hpp"
-#include  "buffer.hpp"
+#include "buffer.hpp"
+#include "ve_swap_chain.hpp"
 #include "utility.hpp"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -86,14 +87,14 @@ namespace ve{
             vkCmdDraw(commandBuffer, vertexCount, instanceCount, 0, 0);
         }
     }
-    void VeModel::updateAnimation(float deltaTime, int frameCounter){
+    void VeModel::updateAnimation(float deltaTime, int frameCounter, int frameIndex){
         if(hasAnimation){
             // std::cout << "Animation updated" << std::endl;
             animationManager->update(deltaTime, *skeleton, frameCounter);
             skeleton->update();
             //update buffer
-            shaderJointsBuffer->writeToBuffer(skeleton->jointMatrices.data());
-            shaderJointsBuffer->flush();
+            shaderJointsBuffer[frameIndex]->writeToBuffer(skeleton->jointMatrices.data());
+            shaderJointsBuffer[frameIndex]->flush();
             
             // for (size_t i = 0; i < 1; ++i) {
             //     std::cout << "Matrix " << i << ":" << std::endl;
@@ -604,8 +605,8 @@ namespace ve{
                 //  inverse bind matrix
                 joints[i].inverseBindMatrix = glm::make_mat4(&inverseBindMatricesData[i * 16]);
                  // local world magtrix
-                extractNodeTransform(model.nodes[jointNodeIdx], joints[i]);
-                joints[i].jointWorldMatrix = calculateLocalTransform(joints[i]);
+                // extractNodeTransform(model.nodes[jointNodeIdx], joints[i]);
+                // joints[i].jointWorldMatrix = calculateLocalTransform(joints[i]);
                 // Debug: Print inverse bind matrix for each joint
                 std::cout << "Joint " << i << " (" << joints[i].name << ") - Inverse Bind Matrix:" << std::endl;
                 for (int row = 0; row < 4; row++) {
@@ -624,17 +625,38 @@ namespace ve{
                     if (j < 15) std::cout << ", ";
                 }
                 std::cout << std::endl;
+
+                //obtain TRS and localWorldMatrix
+                auto& node = model.nodes[jointNodeIdx];
+                if(node.translation.size()==3){
+                    joints[i].translation = glm::make_vec3(node.translation.data());
+                }
+                if(node.rotation.size()==4){
+                    joints[i].rotation = glm::make_quat(node.rotation.data());
+                }
+                if(node.scale.size()==3){
+                    joints[i].scale = glm::make_vec3(node.scale.data());
+                }
+                if(node.matrix.size()==16){
+                    joints[i].jointWorldMatrix = glm::make_mat4(node.matrix.data());
+                }else{
+                    joints[i].jointWorldMatrix = glm::mat4(1.0f);
+                }
             }
             int rootJoint = skin.joints[0];
             loadJoints(rootJoint, -1, model);
-            updateJointHierarchy(model);
+            // updateJointHierarchy(model);
         }
         //create shader buffer
         uint32_t numJoints = static_cast<uint32_t>(skeleton->joints.size());
         uint32_t jointSize = static_cast<uint32_t>(sizeof(glm::mat4));
-        shaderJointsBuffer = std::make_unique<VeBuffer>(veDevice, numJoints * jointSize, 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
-                                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, veDevice.properties.limits.minUniformBufferOffsetAlignment);
-        shaderJointsBuffer->map();
+        shaderJointsBuffer.resize(ve::VeSwapChain::MAX_FRAMES_IN_FLIGHT);
+        for(int i=0;i<shaderJointsBuffer.size();i++){
+            shaderJointsBuffer[i] = std::make_unique<VeBuffer>(veDevice, numJoints * jointSize, 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, veDevice.properties.limits.minUniformBufferOffsetAlignment);
+            shaderJointsBuffer[i]->map();
+        }
+        
     }
     void VeModel::loadJoints(int nodeIndex, int parentIndex, const tinygltf::Model& model){
         int currentJoint = skeleton->nodeJointMap[nodeIndex];

@@ -55,11 +55,12 @@ layout(push_constant) uniform Push {
 
 void main(){
     mat4 skinMatrix = mat4(0.0f);
+    vec4 skinnedPosition = vec4(0.0f);
     
     // Check if we need to apply skinning
     bool applySkinning = false;
     for(int i = 0; i < 4; i++) {
-        if((weights[i] > 0) && (joints[i] > 0) && (joints[i] < 100)) {
+        if((weights[i] != 0) && (joints[i] > 0) && (joints[i] < 100)) {
             // if(joints[i]!=0){
             applySkinning = true;
             break;
@@ -71,16 +72,16 @@ void main(){
         // Blend the joint matrices weighted by vertex weights
         for(int i = 0; i < 4; i++) {
             if(weights[i] > 0 && joints[i] < 100) {
+                vec4 localPosition = jmbo.jointMatrices[joints[i]] * vec4(position, 1.0f);
+                skinnedPosition += localPosition * weights[i];
                 skinMatrix += jmbo.jointMatrices[joints[i]] * weights[i];
             }
         }
     } else {
         // No skinning needed, use identity matrix
         skinMatrix = mat4(1.0f);
+        skinnedPosition = vec4(position, 1.0f);
     }
-    
-    // Apply the skin matrix to the vertex position
-    vec4 skinnedPosition = skinMatrix * vec4(position, 1.0f);
         
     vec4 positionWorld = push.modelMatrix * skinnedPosition;
     // vec4 positionWorld = push.modelMatrix * vec4(position, 1.0f); 

@@ -59,12 +59,12 @@ namespace ve{
         void bind(VkCommandBuffer commandBuffer);
         void draw(VkCommandBuffer commandBuffer);
         void drawInstanced(VkCommandBuffer commandBuffer, uint32_t instanceCount);
-        void updateAnimation(float deltaTime, int frameCounter);
+        void updateAnimation(float deltaTime, int frameCounter, int frameIndex);
         AnimationManager& getAnimationManager() { return *animationManager.get(); }
 
         std::unique_ptr<Skeleton> skeleton;
         std::shared_ptr<AnimationManager> animationManager;
-        std::unique_ptr<VeBuffer> shaderJointsBuffer;
+        std::vector<std::unique_ptr<VeBuffer>> shaderJointsBuffer;
 
     private:
         void createVertexBuffers(const std::vector<Vertex>& vertices);

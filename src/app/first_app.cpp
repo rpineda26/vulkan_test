@@ -79,11 +79,17 @@ namespace ve {
         //create descriptor pools
         //global ubo descriptor pool
         std::vector<VkDescriptorSet> globalDescriptorSets(VeSwapChain::MAX_FRAMES_IN_FLIGHT);
+        std::vector<VkDescriptorSet> animationDescriptorSet(VeSwapChain::MAX_FRAMES_IN_FLIGHT);
         for(int i = 0; i < globalDescriptorSets.size(); i++){
             auto bufferInfo = uniformBuffers[i]->descriptorInfo();
             VeDescriptorWriter(*globalSetLayout, *globalPool)
                 .writeBuffer(0, &bufferInfo)
                 .build(globalDescriptorSets[i]);
+
+            auto bufferInfo2 = gameObjects.at(0).model->shaderJointsBuffer[i]->descriptorInfo();
+            VeDescriptorWriter(*animationSetLayout, *globalPool)
+                .writeBuffer(0,&bufferInfo2)
+                .build(animationDescriptorSet[i]);
         }
         //texture descriptor pool
         VkDescriptorSet textureDescriptorSet;
@@ -92,12 +98,7 @@ namespace ve {
             .writeImage(1, normalMapInfos.data(),3)
             .writeImage(2, specularMapInfos.data(),3)
             .build(textureDescriptorSet);
-        //animation descriptor pool
-        VkDescriptorSet animationDescriptorSet;
-        auto bufferInfo = gameObjects.at(0).model->shaderJointsBuffer->descriptorInfo();
-        VeDescriptorWriter(*animationSetLayout, *globalPool)
-            .writeBuffer(0,&bufferInfo)
-            .build(animationDescriptorSet);
+       
         
         //initialize render systems
         // ShadowRenderSystem shadowRenderSystem{veDevice, *globalPool };
@@ -164,7 +165,7 @@ namespace ve {
                 uniformBuffers[frameIndex]->writeToBuffer(&globalUbo);
                 uniformBuffers[frameIndex]->flush();
                 //update animation
-                gameObjects.at(0).model->updateAnimation(frameTime, frameCount);
+                gameObjects.at(0).model->updateAnimation(frameTime, frameCount, frameIndex);
 
                 //render shadow maps
                 // for(int i =0; i <numLights; i ++){
@@ -178,7 +179,7 @@ namespace ve {
 
                 //render scene
                 veRenderer.beginSwapChainRenderPass(commandBuffer);
-                pbrRenderSystem.renderGameObjects(frameInfo, /*shadowRenderSystem.getShadowDescriptorSet(frameIndex),*/ {globalDescriptorSets[frameIndex], textureDescriptorSet, animationDescriptorSet});
+                pbrRenderSystem.renderGameObjects(frameInfo, /*shadowRenderSystem.getShadowDescriptorSet(frameIndex),*/ {globalDescriptorSets[frameIndex], textureDescriptorSet, animationDescriptorSet[frameIndex]});
                 pointLightSystem.render(frameInfo);
                 if(showOutlignHighlight)
                     outlineHighlightSystem.renderGameObjects(frameInfo);
