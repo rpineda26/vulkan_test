@@ -193,6 +193,17 @@ namespace ve {
     }
     
     void FirstApp::loadGameObjects() {
+        // auto man = VeGameObject::createGameObject();
+        // man.setTextureIndex(2);
+        // man.setNormalIndex(2);
+        // man.setSpecularIndex(2);
+        // man.model = preLoadedModels["CesiumMan"];
+        // man.transform.translation = {0.5f, 0.5f, 0.0f};
+        // // man.transform.scale = {3.0f, 1.0f, 3.0f};
+        // // man.color = {128.0f, 228.1f, 229.1f}; //cyan
+        // man.setTitle("CesiumMan");
+        // gameObjects.emplace(man.getId(),std::move(man));
+
         //object 1: cube
         auto vase = VeGameObject::createGameObject();
         vase.setTextureIndex(2);
@@ -201,9 +212,10 @@ namespace ve {
         vase.model = preLoadedModels["Cute_Demon"];
         vase.transform.translation = {0.5f, 0.5f, 0.0f};
         // vase.transform.scale = {3.0f, 1.0f, 3.0f};
-        vase.color = {128.0f, 228.1f, 229.1f}; //cyan
+        // vase.color = {128.0f, 228.1f, 229.1f}; //cyan
         vase.setTitle("Cute_Demon");
         gameObjects.emplace(vase.getId(),std::move(vase));
+
         //vase
         auto cube = VeGameObject::createGameObject();
         cube.setTextureIndex(1);

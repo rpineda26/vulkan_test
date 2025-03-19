@@ -25,6 +25,12 @@ namespace ve{
         if(isRepeat && (currentKeyFrameTime > lastKeyFrameTime)){
             currentKeyFrameTime = firstKeyFrameTime;
         }
+        // First, reset all joint transforms to their default state
+        for (auto& joint : skeleton.joints) {
+            joint.translation = glm::vec3(0.0f);
+            joint.rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f); // Identity quaternion
+            joint.scale = glm::vec3(1.0f);
+        }
         // std::cout << "Current key frame time: " << currentKeyFrameTime << std::endl;
         for(auto& channel: channels){
             auto& sampler = samplers[channel.samplerIndex];
@@ -40,7 +46,7 @@ namespace ve{
 
                 // std::cout<< "Current key frame time: " << currentKeyFrameTime << std::endl;
                 // std::cout<< "Time stamp: " << sampler.timeStamps[i] << std::endl;
-                
+
                 if(currentKeyFrameTime>=sampler.timeStamps[i] && currentKeyFrameTime <= sampler.timeStamps[i+1]){
                     switch (sampler.interpolationMethod){
                         case InterpolationMethod::LINEAR:{                 

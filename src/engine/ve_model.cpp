@@ -5,6 +5,9 @@
 #include <tiny_obj_loader.h>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 #include <cassert>
 #include <cstring>
 #include <unordered_map>
@@ -85,7 +88,7 @@ namespace ve{
     }
     void VeModel::updateAnimation(float deltaTime, int frameCounter){
         if(hasAnimation){
-            std::cout << "Animation updated" << std::endl;
+            // std::cout << "Animation updated" << std::endl;
             animationManager->update(deltaTime, *skeleton, frameCounter);
             skeleton->update();
             //update buffer
@@ -428,6 +431,14 @@ namespace ve{
                                 static_cast<int>(jointsData[i * 4 + 2]),
                                 static_cast<int>(jointsData[i * 4 + 3])
                             };
+                            // Add debugging print for joint indices
+                            if (i % 100 == 0) { // Print every 100th vertex to avoid flooding console
+                                std::cout << "Vertex " << i << " Joint Indices: " 
+                                        << tempVertices[i].jointIndices.x << " "
+                                        << tempVertices[i].jointIndices.y << " "
+                                        << tempVertices[i].jointIndices.z << " "
+                                        << tempVertices[i].jointIndices.w << std::endl;
+                            }
                         }
                     } else if (jointsAccessor->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
                         const uint16_t* jointsData = reinterpret_cast<const uint16_t*>(
@@ -439,6 +450,14 @@ namespace ve{
                                 static_cast<int>(jointsData[i * 4 + 2]),
                                 static_cast<int>(jointsData[i * 4 + 3])
                             };
+                            // Add debugging print for joint indices
+                            if (i % 100 == 0) { // Print every 100th vertex to avoid flooding console
+                                std::cout << "Vertex " << i << " Joint Indices: " 
+                                        << tempVertices[i].jointIndices.x << " "
+                                        << tempVertices[i].jointIndices.y << " "
+                                        << tempVertices[i].jointIndices.z << " "
+                                        << tempVertices[i].jointIndices.w << std::endl;
+                            }
                         }
                     }
                 }
@@ -467,7 +486,9 @@ namespace ve{
                             // If no weights, assign fully to the first joint
                             tempVertices[i].jointWeights = { 1.0f, 0.0f, 0.0f, 0.0f };
                         }
-                        // std::cout << "Joint Weights: " << tempVertices[i].jointWeights.x << " " << tempVertices[i].jointWeights.y << " " << tempVertices[i].jointWeights.z << " " << tempVertices[i].jointWeights.w << std::endl;
+                        if(i % 100 == 0) { // Print every 100th vertex to avoid flooding console
+                            std::cout << "Joint Weights: " << tempVertices[i].jointWeights.x << " " << tempVertices[i].jointWeights.y << " " << tempVertices[i].jointWeights.z << " " << tempVertices[i].jointWeights.w << std::endl;
+                        }
                     }
                 }
                 // Load indices
@@ -547,8 +568,31 @@ namespace ve{
             const tinygltf::Accessor& invAccessor = model.accessors[skin.inverseBindMatrices];
             const tinygltf::BufferView& invBufferView = model.bufferViews[invAccessor.bufferView];
             const tinygltf::Buffer& invBuffer = model.buffers[invBufferView.buffer];
+            
+            // Debug info about inverse bind matrices accessor
+            std::cout << "Inverse bind matrices accessor info:" << std::endl;
+            std::cout << "  Component type: " << invAccessor.componentType << 
+                        " (Should be " << TINYGLTF_COMPONENT_TYPE_FLOAT << " for float)" << std::endl;
+            std::cout << "  Type: " << invAccessor.type << 
+                        " (Should be " << TINYGLTF_TYPE_MAT4 << " for mat4)" << std::endl;
+            std::cout << "  Count: " << invAccessor.count << std::endl;
+            std::cout << "  Byte offset: " << invAccessor.byteOffset << std::endl;
+
+            // Validate component type
+            if (invAccessor.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
+                throw std::runtime_error("Inverse bind matrices are not of type float.");
+            }
+
+            // Get direct pointer to float data - no need for transposition
             const float* inverseBindMatricesData = reinterpret_cast<const float*>(
                 &invBuffer.data[invBufferView.byteOffset + invAccessor.byteOffset]);
+            
+                // Debug: Print buffer info
+            std::cout << "Inverse bind matrices buffer info:" << std::endl;
+            std::cout << "  Buffer size: " << invBuffer.data.size() << " bytes" << std::endl;
+            std::cout << "  BufferView byteOffset: " << invBufferView.byteOffset << std::endl;
+            std::cout << "  BufferView byteLength: " << invBufferView.byteLength << std::endl;
+            std::cout << "  Total offset: " << (invBufferView.byteOffset + invAccessor.byteOffset) << std::endl;
             
             // Process each joint
             for (size_t i = 0; i < numJoints; i++) {
@@ -557,19 +601,37 @@ namespace ve{
                 // Setup joint data
                 joints[i].name = model.nodes[jointNodeIdx].name;
                 skeleton->nodeJointMap[jointNodeIdx] = i;
-            
-                // Get the inverse bind matrix for this joint
-                glm::mat4 inverseBindMatrix(1.0f);
-                memcpy(&inverseBindMatrix, &inverseBindMatricesData[i * 16], sizeof(glm::mat4));
-                joints[i].inverseBindMatrix = inverseBindMatrix;
+                //  inverse bind matrix
+                joints[i].inverseBindMatrix = glm::make_mat4(&inverseBindMatricesData[i * 16]);
+                 // local world magtrix
+                extractNodeTransform(model.nodes[jointNodeIdx], joints[i]);
+                joints[i].jointWorldMatrix = calculateLocalTransform(joints[i]);
+                // Debug: Print inverse bind matrix for each joint
+                std::cout << "Joint " << i << " (" << joints[i].name << ") - Inverse Bind Matrix:" << std::endl;
+                for (int row = 0; row < 4; row++) {
+                    std::cout << "  [";
+                    for (int col = 0; col < 4; col++) {
+                        std::cout << joints[i].inverseBindMatrix[col][row];
+                        if (col < 3) std::cout << ", ";
+                    }
+                    std::cout << "]" << std::endl;
+                }
+                
+                // Also print raw data values for verification
+                std::cout << "  Raw data: ";
+                for (int j = 0; j < 16; j++) {
+                    std::cout << inverseBindMatricesData[i * 16 + j];
+                    if (j < 15) std::cout << ", ";
+                }
+                std::cout << std::endl;
             }
             int rootJoint = skin.joints[0];
             loadJoints(rootJoint, -1, model);
+            updateJointHierarchy(model);
         }
+        //create shader buffer
         uint32_t numJoints = static_cast<uint32_t>(skeleton->joints.size());
         uint32_t jointSize = static_cast<uint32_t>(sizeof(glm::mat4));
-        
-        
         shaderJointsBuffer = std::make_unique<VeBuffer>(veDevice, numJoints * jointSize, 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
                                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, veDevice.properties.limits.minUniformBufferOffsetAlignment);
         shaderJointsBuffer->map();
@@ -589,11 +651,15 @@ namespace ve{
         }
     }
     void VeModel::loadAnimations(const tinygltf::Model& model){
-        if(!skeleton)
+        if(!skeleton){
+            std::cerr << "Error: Skeleton not loaded" << std::endl;
             return;
+        }
         size_t numAnimations = model.animations.size();
-        if(!numAnimations)
+        if(!numAnimations){
+            std::cerr << "Error: No animations found" << std::endl;
             return;
+        }
         animationManager = std::make_shared<AnimationManager>();
         for(size_t i = 0; i < numAnimations; i++){
             const tinygltf::Animation& animation = model.animations[i];
@@ -715,7 +781,89 @@ namespace ve{
             std::cout << "Animation loaded: " << anim->getName() << std::endl;
         }
         hasAnimation = (animationManager->size()) ? true : false;
+    }
+    // Extract translation, rotation, and scale from a node
+    void VeModel::extractNodeTransform(const tinygltf::Node& node, Joint& joint) {
+        // Default values
+        joint.translation = glm::vec3(0.0f);
+        joint.rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f); // Identity quaternion
+        joint.scale = glm::vec3(1.0f);
 
+        // If matrix is directly provided
+        if (!node.matrix.empty()) {
+            glm::mat4 nodeMatrix = glm::make_mat4(node.matrix.data());
+            
+            // Decompose the matrix into TRS components
+            glm::vec3 skew;
+            glm::vec4 perspective;
+            glm::decompose(nodeMatrix, joint.scale, joint.rotation, joint.translation, skew, perspective);
+        } else {
+            // Extract individual TRS components if provided
+            if (!node.translation.empty()) {
+                joint.translation = glm::vec3(
+                    node.translation[0], 
+                    node.translation[1], 
+                    node.translation[2]
+                );
+            }
+        
+            if (!node.rotation.empty()) {
+                joint.rotation = glm::quat(
+                    node.rotation[3], // w is last in glTF but first in glm
+                    node.rotation[0], 
+                    node.rotation[1], 
+                    node.rotation[2]
+                );
+            }
+            
+            if (!node.scale.empty()) {
+                joint.scale = glm::vec3(
+                    node.scale[0], 
+                    node.scale[1], 
+                    node.scale[2]
+                );
+            }
+        }
+    }
+
+    // Calculate local transform matrix from TRS components
+    glm::mat4 VeModel::calculateLocalTransform(const Joint& joint) {
+        glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), joint.translation);
+        glm::mat4 rotationMatrix = glm::mat4_cast(joint.rotation);
+        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), joint.scale);
+        
+        return translationMatrix * rotationMatrix * scaleMatrix;
+    }
+
+    // Update the joint hierarchy to calculate world matrices
+    void VeModel::updateJointHierarchy(const tinygltf::Model& model) {
+        // Find root joints (joints with parentIndex == -1)
+        for (size_t i = 0; i < skeleton->joints.size(); i++) {
+            if (skeleton->joints[i].parentIndex == -1) {
+                // For root joints, local transform is the world transform
+                skeleton->joints[i].jointWorldMatrix = calculateLocalTransform(skeleton->joints[i]);
+                
+                // Process children
+                updateJointWorldMatrices(i);
+            }
+        }
+    }
+
+    // Recursively update joint world matrices
+    void VeModel::updateJointWorldMatrices(int jointIndex) {
+        Joint& joint = skeleton->joints[jointIndex];
+        
+        // Process all children
+        for (int childIndex : joint.childrenIndices) {
+            Joint& childJoint = skeleton->joints[childIndex];
+            
+            // Child's world matrix = parent's world matrix * child's local matrix
+            glm::mat4 childLocalMatrix = calculateLocalTransform(childJoint);
+            childJoint.jointWorldMatrix = joint.jointWorldMatrix * childLocalMatrix;
+            
+            // Recursively process this child's children
+            updateJointWorldMatrices(childIndex);
+        }
     }
 
 

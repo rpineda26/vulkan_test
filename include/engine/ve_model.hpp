@@ -72,6 +72,10 @@ namespace ve{
         void loadSkeleton(const tinygltf::Model& model);
         void loadAnimations(const tinygltf::Model& model);
         void loadJoints(int nodeIndex, int parentIndex, const tinygltf::Model& model);
+        void extractNodeTransform(const tinygltf::Node& node, Joint& joint);
+        glm::mat4 calculateLocalTransform(const Joint& joint);
+        void updateJointHierarchy(const tinygltf::Model& model);
+        void updateJointWorldMatrices(int jointIndex);
         //attributes
         VeDevice& veDevice;
         //vertex buffer

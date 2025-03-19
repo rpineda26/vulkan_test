@@ -11,6 +11,7 @@ namespace ve{
         std::string name;
         int parentIndex;
         std::vector<int> childrenIndices;
+        glm::mat4 jointWorldMatrix{1.0f};
         glm::mat4 inverseBindMatrix;
 
         //animation TRS matrices
@@ -20,7 +21,15 @@ namespace ve{
         glm::mat4 getAnimatedMatrix(){
             return    glm::translate(glm::mat4(1.0f), translation) 
                     * glm::mat4(rotation) 
-                    * glm::scale(glm::mat4(1.0f), scale);
+                    * glm::scale(glm::mat4(1.0f), scale)
+                    * jointWorldMatrix;
+        }
+        glm::mat4 getLocalMatrix() const {
+            glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), translation);
+            glm::mat4 rotationMatrix = glm::mat4_cast(rotation);
+            glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scale);
+            
+            return translationMatrix * rotationMatrix * scaleMatrix;
         }
     };
     

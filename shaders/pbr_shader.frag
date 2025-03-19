@@ -124,7 +124,8 @@ void main(){
     vec4 albedo = vec4(1.0);
     if(push.textureIndex >= 0){
         albedo = texture(textureSampler[push.textureIndex], fragUv); // include alpha//shadow sampling
-    }else{}
+    }
+    albedo = albedo * vec4(push.baseColor, 1.0);
     // if(albedo == vec4(0.0))
     //     albedo = vec4(push.baseColor, 1.0); 
 

@@ -54,32 +54,44 @@ layout(push_constant) uniform Push {
 } push;
 
 void main(){
-    vec4 animatedPosition = vec4(0.0f);
-    mat4 jointTransform = mat4(0.0f);
-    for(int i = 0; i < 4; i++){
-        if(weights[i] == 0)
-            continue;
-        if(joints[i]>=100){
-            animatedPosition = vec4(position,1.0f);
-            jointTransform = mat4(1.0f);
+    mat4 skinMatrix = mat4(0.0f);
+    
+    // Check if we need to apply skinning
+    bool applySkinning = false;
+    for(int i = 0; i < 4; i++) {
+        if((weights[i] > 0) && (joints[i] > 0) && (joints[i] < 100)) {
+            // if(joints[i]!=0){
+            applySkinning = true;
             break;
+            // }
         }
-        vec4 localPosition = jmbo.jointMatrices[joints[i]] * vec4(position, 1.0f);
-        animatedPosition += localPosition * weights[i];
-        jointTransform += jmbo.jointMatrices[joints[i]] * weights[i];
     }
-
-    vec4 positionWorld = push.modelMatrix * animatedPosition;
-    // vec4 positionWorld = push.modelMatrix * vec4(position, 1.0f);
+    
+    if(applySkinning) {
+        // Blend the joint matrices weighted by vertex weights
+        for(int i = 0; i < 4; i++) {
+            if(weights[i] > 0 && joints[i] < 100) {
+                skinMatrix += jmbo.jointMatrices[joints[i]] * weights[i];
+            }
+        }
+    } else {
+        // No skinning needed, use identity matrix
+        skinMatrix = mat4(1.0f);
+    }
+    
+    // Apply the skin matrix to the vertex position
+    vec4 skinnedPosition = skinMatrix * vec4(position, 1.0f);
+        
+    vec4 positionWorld = push.modelMatrix * skinnedPosition;
+    // vec4 positionWorld = push.modelMatrix * vec4(position, 1.0f); 
     gl_Position = ubo.projectionMatrix * (ubo.viewMatrix * positionWorld);
     fragPosition = positionWorld.xyz;
     fragColor = color * push.baseColor;
     fragUV = uv;
 
     //compute TBN matrix
-    mat3 normalMatrix = transpose(inverse(mat3(push.modelMatrix)* mat3(jointTransform)));
+    mat3 normalMatrix = transpose(inverse(mat3(push.modelMatrix)* mat3(skinMatrix)));
     // mat3 normalMatrix = transpose(inverse(mat3(push.modelMatrix)));
-    fragNormal = normalize(normalMatrix * normal);
     vec3 T = normalize(normalMatrix * tangent);
     vec3 N = normalize(normalMatrix * normal); 
     T = normalize(T - dot(T, N) * N);
@@ -87,6 +99,7 @@ void main(){
     mat3 TBN = transpose(mat3(T, B, N));
     //convert vectors from world space to tangent space
     vec3 cameraPosWorld = vec3(ubo.invViewMatrix * vec4(0.0, 0.0, 0.0, 1.0));
+    fragNormal = N;
     fragTangentPos = TBN * fragPosition;
     fragTangentView = TBN * cameraPosWorld;
     for(int i = 0; i < ubo.pointLightCount; i++){

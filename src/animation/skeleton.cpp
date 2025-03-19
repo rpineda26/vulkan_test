@@ -20,6 +20,7 @@ namespace ve{
     //update the coordinates of all joints based on animation
     void Skeleton::update(){
         int16_t numJoints = static_cast<int16_t>(joints.size());
+        // isAnimated = false;
         if(isAnimated){
             //apply animation transform
             for(int16_t i = 0; i < numJoints; i++){
@@ -27,6 +28,7 @@ namespace ve{
             }
             //recursively update joint matrices
             updateJoint(ROOT_JOINT);
+
             //return from animated space to original model space
             for(int16_t i = 0; i < numJoints; i++){
                 jointMatrices[i] = jointMatrices[i] * joints[i].inverseBindMatrix;
