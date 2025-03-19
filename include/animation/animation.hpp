@@ -41,8 +41,8 @@ namespace ve{
             float getCurrentTime() const{return currentKeyFrameTime - firstKeyFrameTime;}
             std::string const& getName() const{return name;}
 
-            std::vector<Animation::Channel> channels;
-            std::vector<Animation::Sampler> samplers;
+            std::vector<Channel> channels;
+            std::vector<Sampler> samplers;
         private:
             std::string name;
             bool isRepeat;

@@ -19,6 +19,7 @@ namespace ve{
         "flat_vase",
         "smooth_vase",
         "Cute_Demon"
+        "CesiumMan"
     };
     inline const std::vector<std::string> textureFileNames = {
         "brick_texture",
@@ -34,7 +35,8 @@ namespace ve{
         preLoadedModels["flat_vase"] = VeModel::createModelFromFile(veDevice, "assets/models/flat_vase.obj");
         preLoadedModels["smooth_vase"] = VeModel::createModelFromFile(veDevice, "assets/models/smooth_vase.obj");
         preLoadedModels["colored_cube"] = VeModel::createModelFromFile(veDevice, "assets/models/colored_cube.obj");
-        preLoadedModels["Cute_Demon"] = VeModel::createModelFromFile(veDevice, "assets/models/Cute_Demon.glb");
+        preLoadedModels["Cute_Demon"] = VeModel::createModelFromFile(veDevice, "assets/models/result.gltf");
+        preLoadedModels["CesiumMan"] = VeModel::createModelFromFile(veDevice, "assets/models/CesiumManAnimations.gltf");
     }
     inline void cleanupPreloadedModels() {
     for (auto& [key, model] : preLoadedModels) {

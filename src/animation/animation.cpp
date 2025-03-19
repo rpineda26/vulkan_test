@@ -1,7 +1,7 @@
 #include "animation.hpp"
-
+#include <iostream>
 namespace ve{
-    Animation::Animation(std::string const& name): name(name), isRepeat(false){}
+    Animation::Animation(std::string const& name): name(name), isRepeat(true){}
     void Animation::start(){
         currentKeyFrameTime = firstKeyFrameTime;
     }
@@ -15,22 +15,32 @@ namespace ve{
         return !isRepeat || (currentKeyFrameTime + deltaTime > lastKeyFrameTime);
     }
     void Animation::update(const float& deltaTime, ve::Skeleton& skeleton){
-        if(!isRunning()) 
+        if(!isRunning()){
+            std::cerr << "Animation not running" << std::endl;
             return;
-        currentKeyFrameTime += deltaTime;
-        if(isRepeat && (currentKeyFrameTime > lastKeyFrameTime)){
-            if(isRepeat){
-                currentKeyFrameTime = firstKeyFrameTime;
-            }else{
-                currentKeyFrameTime = lastKeyFrameTime + 1.0f;
-            }
         }
+
+        currentKeyFrameTime += deltaTime;
+
+        if(isRepeat && (currentKeyFrameTime > lastKeyFrameTime)){
+            currentKeyFrameTime = firstKeyFrameTime;
+        }
+        // std::cout << "Current key frame time: " << currentKeyFrameTime << std::endl;
         for(auto& channel: channels){
             auto& sampler = samplers[channel.samplerIndex];
             int jointIndex = skeleton.nodeJointMap[channel.node];
             auto& joint = skeleton.joints[jointIndex];
-            //find the keyframe
+
+            // std::cout << "Channel node: " << channel.node << std::endl;
+            // std::cout << "Channel path type: " << static_cast<int>(channel.pathType) << std::endl;
+            // std::cout << "Channel sampler index: " << channel.samplerIndex << std::endl;
+            // std::cout << "Joint index: " << jointIndex << std::endl;
+
             for(size_t i = 0; i < sampler.timeStamps.size() - 1; i++){
+
+                // std::cout<< "Current key frame time: " << currentKeyFrameTime << std::endl;
+                // std::cout<< "Time stamp: " << sampler.timeStamps[i] << std::endl;
+                
                 if(currentKeyFrameTime>=sampler.timeStamps[i] && currentKeyFrameTime <= sampler.timeStamps[i+1]){
                     switch (sampler.interpolationMethod){
                         case InterpolationMethod::LINEAR:{                 
@@ -61,7 +71,7 @@ namespace ve{
                         case InterpolationMethod::STEP:{
                             switch (channel.pathType){
                                 case PathType::TRANSLATION:{
-                                    skeleton.joints[channel.node].translation = sampler.TRSoutputValues[i];
+                                    skeleton.joints[channel.node].translation = glm::vec3(sampler.TRSoutputValues[i]);
                                     break;
                                 }
                                 case PathType::ROTATION:{
@@ -72,12 +82,18 @@ namespace ve{
                                     break;
                                 }
                                 case PathType::SCALE:{
-                                    skeleton.joints[channel.node].scale = sampler.TRSoutputValues[i];
+                                    skeleton.joints[channel.node].scale = glm::vec3(sampler.TRSoutputValues[i]);
                                     break;
                                 }
+                                default:
+                                    std::cerr << "Unknown channel path type" << std::endl;
+                                    break;
                             }
                             break;
                         }
+                        default:
+                            std::cerr << "Unknown interpolation method" << std::endl;
+                            break;
                             
                     }
                 }

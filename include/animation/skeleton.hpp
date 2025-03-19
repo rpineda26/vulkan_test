@@ -19,7 +19,7 @@ namespace ve{
         glm::vec3 scale{1.0f};
         glm::mat4 getAnimatedMatrix(){
             return    glm::translate(glm::mat4(1.0f), translation) 
-                    * glm::mat4_cast(rotation) 
+                    * glm::mat4(rotation) 
                     * glm::scale(glm::mat4(1.0f), scale);
         }
     };

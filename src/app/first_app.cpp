@@ -122,6 +122,8 @@ namespace ve {
         int numLights = getNumLights();
         bool showOutlignHighlight = true;
         int frameCount = 0;
+
+        gameObjects.at(0).model->animationManager->start(0);
         //main loop
         while (!veWindow.shouldClose()) {
             glfwPollEvents();
@@ -193,13 +195,13 @@ namespace ve {
     void FirstApp::loadGameObjects() {
         //object 1: cube
         auto vase = VeGameObject::createGameObject();
-        vase.setTextureIndex(0);
-        vase.setNormalIndex(0);
-        vase.setSpecularIndex(0);
+        vase.setTextureIndex(2);
+        vase.setNormalIndex(2);
+        vase.setSpecularIndex(2);
         vase.model = preLoadedModels["Cute_Demon"];
         vase.transform.translation = {0.5f, 0.5f, 0.0f};
         // vase.transform.scale = {3.0f, 1.0f, 3.0f};
-        // vase.color = {128.0f, 228.1f, 229.1f}; //cyan
+        vase.color = {128.0f, 228.1f, 229.1f}; //cyan
         vase.setTitle("Cute_Demon");
         gameObjects.emplace(vase.getId(),std::move(vase));
         //vase
@@ -212,7 +214,7 @@ namespace ve {
         cube.transform.scale = {0.45f, 0.45f, 0.45f};
         // cube.color = {128.0f, 228.1f, 229.1f}; //cyan
         cube.setTitle("Cube");
-        gameObjects.emplace(cube.getId(),std::move(cube));
+        // gameObjects.emplace(cube.getId(),std::move(cube));
         //object 2: floor
         auto quad = VeGameObject::createGameObject();
         quad.setTextureIndex(2);
@@ -223,7 +225,7 @@ namespace ve {
         quad.transform.scale = {3.0f, 0.5f, 3.0f};
         // quad.color = {103.0f,242.0f,209.0f};//light green
         quad.setTitle("Floor");
-        gameObjects.emplace(quad.getId(),std::move(quad));
+        // gameObjects.emplace(quad.getId(),std::move(quad));
 
         //object 3: light
         auto light = VeGameObject::createPointLight(1.0f, .2f, {1.0f,1.0f,1.0f});

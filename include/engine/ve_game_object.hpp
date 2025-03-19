@@ -79,9 +79,9 @@ namespace ve{
             VeGameObject(id_t objId): id{objId} {}
             id_t id;
             char title[26]; 
-            uint32_t textureIndex = 0;
-            uint32_t normalIndex = 0;
-            uint32_t specularIndex = 0;
+            uint32_t textureIndex = -1;
+            uint32_t normalIndex = -1;
+            uint32_t specularIndex = -1;
             float smoothness = 0.0f;
     };
 

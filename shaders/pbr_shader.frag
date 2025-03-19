@@ -27,7 +27,7 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
 } ubo;
 layout(set = 1, binding = 0) uniform sampler2D textureSampler[3]; 
 layout(set = 1, binding = 1) uniform sampler2D normalSampler[3];
-layout(set = 1, binding = 2) uniform sampler2D specularSampler[5];
+layout(set = 1, binding = 2) uniform sampler2D specularSampler[3];
 // layout(set = 1, binding = 0) uniform samplerCube shadowMapSampler[10];
 
 layout(push_constant) uniform Push {
@@ -121,22 +121,29 @@ void Blinn_Phong() {
 //PBR: specular workflow
 void main(){
     //load texture maps
-    vec4 albedo = texture(textureSampler[push.textureIndex], fragUv); // include alpha//shadow sampling
-    albedo = albedo * vec4(fragColor, 1.0);
-    vec3 surfaceNormal = texture(normalSampler[push.normalIndex], fragUv).rgb;
-    // vec4 specularSample = texture(specularSampler[push.specularIndex], fragUv);
-    // vec3 specularColor = specularSample.rgb;
-    vec3 specularColor = vec3(0.04);
+    vec4 albedo = vec4(1.0);
+    if(push.textureIndex >= 0){
+        albedo = texture(textureSampler[push.textureIndex], fragUv); // include alpha//shadow sampling
+    }else{}
+    // if(albedo == vec4(0.0))
+    //     albedo = vec4(push.baseColor, 1.0); 
 
-    //convert smoothness to roughness
-    // float smoothness = mix(specularSample.a, push.smoothness, smoothness_input_weight);
-    // float roughness = 1 - push.smoothness * specularSample.a;
+    vec3 specularColor = vec3(0.04);
     float roughness = 1 - push.smoothness;
+    if(push.specularIndex >=0){
+        vec4 specularSample = texture(specularSampler[push.specularIndex], fragUv);
+        specularColor = specularSample.rgb;
+        roughness = 1 - push.smoothness * specularSample.a;
+    }
     roughness = max(roughness, minimumRoughness);
 
 
     //calculate values that does not factor in light vector
-    vec3 N = normalize(surfaceNormal * 2.0 - 1.0); //convert from 0-1 to -1 to 1
+    vec3 N = fragNormal;
+    if(push.normalIndex >= 0){
+        vec3 surfaceNormal = texture(normalSampler[push.normalIndex], fragUv).rgb;
+        N = normalize(surfaceNormal * 2.0 - 1.0); //convert from 0-1 to -1 to 1
+    }
     vec3 V = normalize(fragTangentView - fragTangentPos);
     float NdotV = max(dot(N, V), 0.0);
 

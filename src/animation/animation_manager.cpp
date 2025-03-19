@@ -1,7 +1,7 @@
 #include "animation_manager.hpp"
 #include <iostream>
 namespace ve{
-    AnimationManager::AnimationManager(): currentAnimation(nullptr), frameCount(1){}
+    AnimationManager::AnimationManager(): currentAnimation(nullptr), frameCount(0){}
     Animation& AnimationManager::operator[](std::string const& animation){
         return *animationsMap[animation];
     }
@@ -41,9 +41,12 @@ namespace ve{
         }
     }
     void AnimationManager::update(const float& deltaTime, ve::Skeleton& skeleton, int frameCounter){
+        // std::cout << "AnimationManager update" << std::endl;
         if(frameCount != frameCounter){
+            // std::cout << "AnimationManager udpdate condition reachable" <<std::endl;
             frameCount = frameCounter;
             if(currentAnimation){
+                // std::cout<<"updating "<<currentAnimation->getName()<<std::endl;
                 currentAnimation->update(deltaTime, skeleton);
             }
         }

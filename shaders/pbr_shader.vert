@@ -35,6 +35,10 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     float time;
 } ubo;
 
+layout(set = 1, binding = 0) uniform sampler2D textureSampler[3]; 
+layout(set = 1, binding = 1) uniform sampler2D normalSampler[3];
+layout(set = 1, binding = 2) uniform sampler2D specularSampler[3];
+
 layout(set = 2, binding = 0) uniform JointMatrixBufferObject {
     mat4 jointMatrices[100];
 } jmbo;
@@ -66,14 +70,15 @@ void main(){
     }
 
     vec4 positionWorld = push.modelMatrix * animatedPosition;
+    // vec4 positionWorld = push.modelMatrix * vec4(position, 1.0f);
     gl_Position = ubo.projectionMatrix * (ubo.viewMatrix * positionWorld);
     fragPosition = positionWorld.xyz;
     fragColor = color * push.baseColor;
-    fragNormal = normalize(vec3(mat3(push.normalMatrix) * normal));
     fragUV = uv;
 
     //compute TBN matrix
     mat3 normalMatrix = transpose(inverse(mat3(push.modelMatrix)* mat3(jointTransform)));
+    // mat3 normalMatrix = transpose(inverse(mat3(push.modelMatrix)));
     fragNormal = normalize(normalMatrix * normal);
     vec3 T = normalize(normalMatrix * tangent);
     vec3 N = normalize(normalMatrix * normal); 

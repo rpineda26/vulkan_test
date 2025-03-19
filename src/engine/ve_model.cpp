@@ -85,22 +85,23 @@ namespace ve{
     }
     void VeModel::updateAnimation(float deltaTime, int frameCounter){
         if(hasAnimation){
+            std::cout << "Animation updated" << std::endl;
             animationManager->update(deltaTime, *skeleton, frameCounter);
             skeleton->update();
             //update buffer
             shaderJointsBuffer->writeToBuffer(skeleton->jointMatrices.data());
             shaderJointsBuffer->flush();
-            std::cout << "Animation updated" << std::endl;
-            for (size_t i = 0; i < 1; ++i) {
-                std::cout << "Matrix " << i << ":" << std::endl;
-                for (int row = 0; row < 4; row++) {
-                    for (int col = 0; col < 4; col++) {
-                        std::cout << skeleton->jointMatrices[6][col][row] << " ";
-                    }
-                    std::cout << std::endl;
-                }
-                std::cout << std::endl;
-            }      
+            
+            // for (size_t i = 0; i < 1; ++i) {
+            //     std::cout << "Matrix " << i << ":" << std::endl;
+            //     for (int row = 0; row < 4; row++) {
+            //         for (int col = 0; col < 4; col++) {
+            //             std::cout << skeleton->jointMatrices[6][col][row] << " ";
+            //         }
+            //         std::cout << std::endl;
+            //     }
+            //     std::cout << std::endl;
+            // }      
         }
     }
     std::vector<VkVertexInputBindingDescription> VeModel::Vertex::getBindingDescriptions(){
@@ -219,6 +220,7 @@ namespace ve{
         std::string warn;
         std::string fullPath = std::string(ENGINE_DIR) + filePath;
         bool ret = false;
+        std::cout << "Loading model: " << fullPath << std::endl;
         
         // Check if file is binary (.glb) or text (.gltf) format
         if (filePath.find(".glb") != std::string::npos) {
@@ -234,32 +236,32 @@ namespace ve{
             std::cerr << "Error: " << err << std::endl;
         }
         if(!ret){
-            throw std::runtime_error("Failed to load gltf file");
+            std::cerr<<"Failed to load gltf file";
         }
-        //load buffers
-        for(const auto& buffer: model.buffers){
-            std::cout << "Buffer: " << buffer.name << std::endl;
-        }
-        //load images
-        for(const auto& image: model.images){
-            std::cout << "Image: " << image.name << std::endl;
-        }
-        //load materials
-        for(const auto& material: model.materials){
-            std::cout << "Material: " << material.name << std::endl;
-        }
-        //load meshes
-        for(const auto& mesh: model.meshes){
-            std::cout << "Mesh: " << mesh.name << std::endl;
-        }
-        //load nodes
-        for(const auto& node: model.nodes){
-            std::cout << "Node: " << node.name << std::endl;
-        }
-        //load textures
-        for(const auto& texture: model.textures){
-            std::cout << "Texture: " << texture.name << std::endl;
-        }
+        // //load buffers
+        // for(const auto& buffer: model.buffers){
+        //     std::cout << "Buffer: " << buffer.name << std::endl;
+        // }
+        // //load images
+        // for(const auto& image: model.images){
+        //     std::cout << "Image: " << image.name << std::endl;
+        // }
+        // //load materials
+        // for(const auto& material: model.materials){
+        //     std::cout << "Material: " << material.name << std::endl;
+        // }
+        // //load meshes
+        // for(const auto& mesh: model.meshes){
+        //     std::cout << "Mesh: " << mesh.name << std::endl;
+        // }
+        // //load nodes
+        // for(const auto& node: model.nodes){
+        //     std::cout << "Node: " << node.name << std::endl;
+        // }
+        // //load textures
+        // for(const auto& texture: model.textures){
+        //     std::cout << "Texture: " << texture.name << std::endl;
+        // }
 
         vertices.clear();
         indices.clear();
@@ -421,10 +423,10 @@ namespace ve{
                             &jointsBuffer->data[jointsBufferView->byteOffset + jointsAccessor->byteOffset]);
                         for (size_t i = 0; i < vertexCount; i++) {
                             tempVertices[i].jointIndices = {
-                                static_cast<float>(jointsData[i * 4 + 0]),
-                                static_cast<float>(jointsData[i * 4 + 1]),
-                                static_cast<float>(jointsData[i * 4 + 2]),
-                                static_cast<float>(jointsData[i * 4 + 3])
+                                static_cast<int>(jointsData[i * 4 + 0]),
+                                static_cast<int>(jointsData[i * 4 + 1]),
+                                static_cast<int>(jointsData[i * 4 + 2]),
+                                static_cast<int>(jointsData[i * 4 + 3])
                             };
                         }
                     } else if (jointsAccessor->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
@@ -432,10 +434,10 @@ namespace ve{
                             &jointsBuffer->data[jointsBufferView->byteOffset + jointsAccessor->byteOffset]);
                         for (size_t i = 0; i < vertexCount; i++) {
                             tempVertices[i].jointIndices = {
-                                static_cast<float>(jointsData[i * 4 + 0]),
-                                static_cast<float>(jointsData[i * 4 + 1]),
-                                static_cast<float>(jointsData[i * 4 + 2]),
-                                static_cast<float>(jointsData[i * 4 + 3])
+                                static_cast<int>(jointsData[i * 4 + 0]),
+                                static_cast<int>(jointsData[i * 4 + 1]),
+                                static_cast<int>(jointsData[i * 4 + 2]),
+                                static_cast<int>(jointsData[i * 4 + 3])
                             };
                         }
                     }
@@ -568,7 +570,7 @@ namespace ve{
         uint32_t jointSize = static_cast<uint32_t>(sizeof(glm::mat4));
         
         
-        shaderJointsBuffer = std::make_unique<VeBuffer>(veDevice, sizeof(glm::mat4), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+        shaderJointsBuffer = std::make_unique<VeBuffer>(veDevice, numJoints * jointSize, 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
                                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, veDevice.properties.limits.minUniformBufferOffsetAlignment);
         shaderJointsBuffer->map();
     }
@@ -706,10 +708,11 @@ namespace ve{
                 }else if(gltfChannel.target_path == "scale"){
                     channel.pathType = Animation::PathType::SCALE;
                 }else{
-                    std::cout << "Error: Animation channel target path not supported" << std::endl;
+                    std::cerr << "Unknown channel target path: " << gltfChannel.target_path << std::endl;
                 }
             }
             animationManager->push(anim);
+            std::cout << "Animation loaded: " << anim->getName() << std::endl;
         }
         hasAnimation = (animationManager->size()) ? true : false;
 

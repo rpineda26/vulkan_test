@@ -4,8 +4,8 @@ namespace ve{
     Skeleton::Skeleton(){}
     Skeleton::~Skeleton(){}
     void Skeleton::traverse(){
-        std::cout << "Skeleton 0: " << name << std::endl;
         int indent = 0;
+        std::cout << "Skeleton indent: " << name << std::endl;
         auto& root = joints[0];
         traverse(root, indent + 1);
     }
@@ -30,6 +30,10 @@ namespace ve{
             //return from animated space to original model space
             for(int16_t i = 0; i < numJoints; i++){
                 jointMatrices[i] = jointMatrices[i] * joints[i].inverseBindMatrix;
+            }
+        }else{
+            for(int16_t i=0; i<numJoints;i++){
+                jointMatrices[i] = glm::mat4(1.0f);
             }
         }
     }
