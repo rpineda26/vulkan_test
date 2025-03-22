@@ -6,6 +6,7 @@
 #include "point_light_system.hpp"
 #include "outline_highlight_system.hpp"
 #include "shadow_render_system.hpp"
+#include "cube_map_system.hpp"
 #include "ve_imgui.hpp"
 #include "utility.hpp"
 
@@ -105,6 +106,7 @@ namespace ve {
         PbrRenderSystem pbrRenderSystem{veDevice, veRenderer.getSwapChainRenderPass(), {globalSetLayout->getDescriptorSetLayout(), textureSetLayout->getDescriptorSetLayout(), animationSetLayout->getDescriptorSetLayout()/*, shadowRenderSystem.getDescriptorSetLayout()*/ } };
         PointLightSystem pointLightSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
         OutlineHighlightSystem outlineHighlightSystem{veDevice, veRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
+        CubeMapRenderSystem cubeMapRenderSystem{veDevice, veRenderer.getSwapChainRenderPass(), {globalSetLayout->getDescriptorSetLayout(), gameObjects.at(cubeMapIndex).cubeMapComponent->descriptorSetLayout->getDescriptorSetLayout()} };
         //create camera
         VeCamera camera{};
         auto viewerObject = VeGameObject::createGameObject();
@@ -183,6 +185,7 @@ namespace ve {
                 pointLightSystem.render(frameInfo);
                 if(showOutlignHighlight)
                     outlineHighlightSystem.renderGameObjects(frameInfo);
+                cubeMapRenderSystem.renderGameObjects(frameInfo);
                 VeImGui::renderImGuiFrame(commandBuffer);
                 veRenderer.endSwapChainRenderPass(commandBuffer);
                 veRenderer.endFrame();
@@ -245,6 +248,12 @@ namespace ve {
         light.setTitle("Light");
         light.transform.translation = {-0.811988f, -6.00838f, 0.1497f};
         gameObjects.emplace(light.getId(),std::move(light));
+
+        //skybox
+        auto skybox = VeGameObject::createCubeMap(veDevice, {"assets/cubemap/right.png", "assets/cubemap/left.png", "assets/cubemap/top.png", "assets/cubemap/bottom.png", "assets/cubemap/front.png", "assets/cubemap/back.png"}, *globalPool);
+        skybox.setTitle("Skybox");
+        gameObjects.emplace(skybox.getId(),std::move(skybox));
+        cubeMapIndex = skybox.getId();
     }
     void FirstApp::loadTextures(){
         textures.push_back(std::make_unique<VeTexture>(veDevice, "assets/textures/brick_texture.png"));

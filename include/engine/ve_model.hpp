@@ -42,12 +42,15 @@ namespace ve{
                         jointWeights == other.jointWeights;
             }
         };
+
+        static constexpr int CUBE_MAP_VERTEX_COUNT = 36;
         struct Builder{
             std::vector<Vertex> vertices;
             std::vector<uint32_t> indices;
             tinygltf::Model model;
             void loadModel(const std::string& filePath);
             void loadModelGLTF(const std::string& filePath);
+            void loadCubeMap(glm::vec3 cubeVetices[CUBE_MAP_VERTEX_COUNT]);
         };
 
         VeModel(VeDevice& device, const VeModel::Builder& builder);
@@ -56,6 +59,7 @@ namespace ve{
         VeModel& operator=(const VeModel&) = delete;
 
         static std::unique_ptr<VeModel> createModelFromFile(VeDevice& device, const std::string& filePath);
+        static std::unique_ptr<VeModel> createCubeMap(VeDevice& device, glm::vec3 cubeVetices[CUBE_MAP_VERTEX_COUNT]);
         void bind(VkCommandBuffer commandBuffer);
         void draw(VkCommandBuffer commandBuffer);
         void drawInstanced(VkCommandBuffer commandBuffer, uint32_t instanceCount);

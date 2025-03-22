@@ -1,4 +1,5 @@
 #include "ve_game_object.hpp"
+#include <iostream>
 
 namespace ve{
     glm::mat4 TransformComponent::mat4() {
@@ -63,5 +64,85 @@ namespace ve{
         pointLight.transform.scale.x = radius;
         pointLight.color = color;
         return pointLight;
+    }
+    VeGameObject VeGameObject::createCubeMap(VeDevice& device, const std::vector<std::string>& faces, VeDescriptorPool& descriptorPool){
+        static constexpr int VERTEX_COUNT = 36;
+        VeGameObject cubeObj = VeGameObject::createGameObject();
+        
+        glm::vec3 cubeMapVertices[VERTEX_COUNT] = {
+            // Positions (X, Y, Z)
+            {-1.0f,  1.0f, -1.0f}, // Top-left front
+            {-1.0f, -1.0f, -1.0f}, // Bottom-left front
+            { 1.0f, -1.0f, -1.0f}, // Bottom-right front
+            { 1.0f, -1.0f, -1.0f}, // Bottom-right front
+            { 1.0f,  1.0f, -1.0f}, // Top-right front
+            {-1.0f,  1.0f, -1.0f}, // Top-left front
+        
+            {-1.0f, -1.0f,  1.0f}, // Bottom-left back
+            {-1.0f, -1.0f, -1.0f}, // Bottom-left front
+            {-1.0f,  1.0f, -1.0f}, // Top-left front
+            {-1.0f,  1.0f, -1.0f}, // Top-left front
+            {-1.0f,  1.0f,  1.0f}, // Top-left back
+            {-1.0f, -1.0f,  1.0f}, // Bottom-left back
+        
+            {1.0f, -1.0f, -1.0f},  // Bottom-right front
+            {1.0f, -1.0f,  1.0f},  // Bottom-right back
+            {1.0f,  1.0f,  1.0f},  // Top-right back
+            {1.0f,  1.0f,  1.0f},  // Top-right back
+            {1.0f,  1.0f, -1.0f},  // Top-right front
+            {1.0f, -1.0f, -1.0f},  // Bottom-right front
+        
+            {-1.0f, -1.0f,  1.0f}, // Bottom-left back
+            {-1.0f,  1.0f,  1.0f}, // Top-left back
+            { 1.0f,  1.0f,  1.0f}, // Top-right back
+            { 1.0f,  1.0f,  1.0f}, // Top-right back
+            { 1.0f, -1.0f,  1.0f}, // Bottom-right back
+            {-1.0f, -1.0f,  1.0f}, // Bottom-left back
+        
+            {-1.0f,  1.0f, -1.0f}, // Top-left front
+            { 1.0f,  1.0f, -1.0f}, // Top-right front
+            { 1.0f,  1.0f,  1.0f}, // Top-right back
+            { 1.0f,  1.0f,  1.0f}, // Top-right back
+            {-1.0f,  1.0f,  1.0f}, // Top-left back
+            {-1.0f,  1.0f, -1.0f}, // Top-left front
+        
+            {-1.0f, -1.0f, -1.0f}, // Bottom-left front
+            {-1.0f, -1.0f,  1.0f}, // Bottom-left back
+            { 1.0f, -1.0f, -1.0f}, // Bottom-right front
+            { 1.0f, -1.0f, -1.0f}, // Bottom-right front
+            {-1.0f, -1.0f,  1.0f}, // Bottom-left back
+            { 1.0f, -1.0f,  1.0f}, // Bottom-right back
+        };
+        
+
+         
+        //load vertex data with the model class
+        cubeObj.model = VeModel::createCubeMap(device, cubeMapVertices);
+        //load the texture data
+        auto cubeMap = CubeMap(device, true);
+        bool srgb = true;
+        bool flip = false;
+        if(cubeMap.init(faces, srgb, flip)){
+            cubeObj.cubeMapComponent = std::make_unique<CubeMapComponent>();
+            cubeObj.cubeMapComponent->cubeMap = std::make_unique<CubeMap>(std::move(cubeMap));
+        }else{
+            throw std::runtime_error("Failed to load cubemap");
+        }
+        //create descriptor set layout
+        std::cout <<"Creating cube descriptor set layout"<<std::endl;
+        cubeObj.cubeMapComponent->descriptorSetLayout = VeDescriptorSetLayout::Builder(device)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .build();
+        //create descriptor set
+        std::cout<<"Creating cube desriptor set" <<std::endl;
+        VkDescriptorImageInfo imageInfo{};
+        imageInfo.imageLayout = cubeObj.cubeMapComponent->cubeMap->getImageLayout();
+        imageInfo.imageView = cubeObj.cubeMapComponent->cubeMap->getImageView();
+        imageInfo.sampler = cubeObj.cubeMapComponent->cubeMap->getSampler();
+        VeDescriptorWriter(*cubeObj.cubeMapComponent->descriptorSetLayout, descriptorPool)
+            .writeImage(0, &imageInfo, 1)
+            .build(cubeObj.cubeMapComponent->descriptorSet);
+        std::cout<<"CubeMap created"<<std::endl;
+        return cubeObj;
     }
 }

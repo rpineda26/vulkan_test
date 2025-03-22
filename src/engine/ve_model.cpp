@@ -144,6 +144,11 @@ namespace ve{
         }
         return model;
     }
+    std::unique_ptr<VeModel> VeModel::createCubeMap(VeDevice& device, glm::vec3 cubeVetices[CUBE_MAP_VERTEX_COUNT]){
+        Builder builder{};
+        builder.loadCubeMap(cubeVetices);
+        return std::make_unique<VeModel>(device, builder);
+    }
     void VeModel::Builder::loadModel(const std::string& filePath){
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
@@ -548,6 +553,27 @@ namespace ve{
                 vertices[indices[i + 1]].tangent = tangent;
                 vertices[indices[i + 2]].tangent = tangent;
             }
+        }
+    }
+
+    void VeModel::Builder::loadCubeMap(glm::vec3 cubeVertices[CUBE_MAP_VERTEX_COUNT]){
+        vertices.clear();
+        indices.clear();
+        std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+        for (size_t i = 0; i < CUBE_MAP_VERTEX_COUNT; i++) {
+            Vertex vertex{};
+            vertex.position = cubeVertices[i];
+            vertex.color = { 1.0f, 1.0f, 1.0f };
+            vertex.normal = { 0.0f, 0.0f, 0.0f };
+            vertex.uv = { 0.0f, 0.0f };
+            vertex.jointIndices = glm::ivec4(0);
+            vertex.jointWeights = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+            
+            if (uniqueVertices.count(vertex) == 0) {
+                uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                vertices.push_back(vertex);
+            }
+            indices.push_back(uniqueVertices[vertex]);
         }
     }
     void VeModel::loadSkeleton(const tinygltf::Model& model){

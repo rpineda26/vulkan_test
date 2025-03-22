@@ -72,8 +72,9 @@ class VeDevice {
       VkImage &image,
       VkDeviceMemory &imageMemory);
 
-  VkPhysicalDeviceProperties properties;
-
+    VkPhysicalDeviceProperties properties;
+    
+  
  private:
   void createInstance();
   void setupDebugMessenger();

@@ -40,6 +40,8 @@ namespace ve {
             std::vector<VkDescriptorImageInfo> specularMapInfos;
             SceneEditor sceneEditor{};
             VeGameObject::Map gameObjects;
+            //temporary pointer to cube map obj
+            int cubeMapIndex = 0;
             int selectedObject = -1;
     };
 }

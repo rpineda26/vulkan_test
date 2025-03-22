@@ -1,6 +1,9 @@
 #pragma once
 
 #include "ve_model.hpp"
+#include "ve_device.hpp"
+#include "ve_descriptors.hpp"
+#include "cube_map.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <memory>
 #include <unordered_map>
@@ -16,6 +19,11 @@ namespace ve{
     struct PointLightComponent{
         float lightIntensity = 1.0f;
     };
+    struct CubeMapComponent{
+        std::unique_ptr<CubeMap> cubeMap;
+        VkDescriptorSet descriptorSet;
+        std::unique_ptr<VeDescriptorSetLayout> descriptorSetLayout;
+    };
     class VeGameObject { 
         public:
             //user defined types
@@ -28,7 +36,8 @@ namespace ve{
             }
             //instantiation of point light
             static VeGameObject createPointLight(float intensity=1.0f, float radius=0.1f, glm::vec3 color=glm::vec3(1.0f));
-
+            //instantiation of cube map
+            static VeGameObject createCubeMap(VeDevice& device, const std::vector<std::string>& faces, VeDescriptorPool& descriptorPool);
             VeGameObject(const VeGameObject&) = delete;
             VeGameObject& operator=(const VeGameObject&) = delete;
             VeGameObject(VeGameObject&&) = default;
@@ -40,6 +49,7 @@ namespace ve{
             //optional attributes
             std::shared_ptr<VeModel> model{};
             std::unique_ptr<PointLightComponent> lightComponent = nullptr;
+            std::unique_ptr<CubeMapComponent> cubeMapComponent = nullptr;
 
             //getters and setters
             id_t getId() { return id; }
